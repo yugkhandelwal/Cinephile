@@ -43,6 +43,4 @@ npm run build
 npm run preview
 ```
 
-## License
 
-This project is yours to customize. Add your preferred license.
