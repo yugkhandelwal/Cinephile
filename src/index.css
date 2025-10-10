@@ -1,0 +1,325 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Light mode */
+    --background: 0 0% 100%;
+    --foreground: 229 84% 5%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 229 84% 5%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 229 84% 5%;
+
+    --primary: 258 90% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 229 20% 95%;
+    --secondary-foreground: 229 84% 5%;
+
+    --muted: 229 20% 95%;
+    --muted-foreground: 229 40% 40%;
+
+    --accent: 258 90% 66%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 229 20% 90%;
+    --input: 229 20% 90%;
+    --ring: 258 90% 66%;
+
+    --radius: 0.75rem;
+    
+    /* Custom cinematic theme tokens */
+    --cinema-purple: 258 90% 66%;
+    --cinema-dark: 0 0% 100%;
+    --cinema-card: 0 0% 98%;
+    --cinema-hover: 229 20% 95%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(258 90% 66%), hsl(280 90% 60%));
+    --gradient-hero: linear-gradient(180deg, transparent, hsl(0 0% 100%));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(258 90% 66% / 0.3);
+    --shadow-card: 0 8px 16px hsl(0 0% 0% / 0.1);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 229 84% 5%;
+    --sidebar-primary: 258 90% 66%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 229 20% 95%;
+    --sidebar-accent-foreground: 229 84% 5%;
+    --sidebar-border: 229 20% 90%;
+    --sidebar-ring: 258 90% 66%;
+  }
+
+  .dark {
+    --background: 229 84% 5%;
+    --foreground: 0 0% 98%;
+
+    --card: 229 70% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 229 70% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 258 90% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 229 50% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 229 40% 20%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 258 90% 66%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 229 40% 20%;
+    --input: 229 40% 20%;
+    --ring: 258 90% 66%;
+    
+    /* Custom cinematic theme tokens */
+    --cinema-purple: 258 90% 66%;
+    --cinema-dark: 229 84% 5%;
+    --cinema-card: 229 70% 8%;
+    --cinema-hover: 229 50% 12%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(258 90% 66%), hsl(280 90% 60%));
+    --gradient-hero: linear-gradient(180deg, transparent, hsl(229 84% 5%));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(258 90% 66% / 0.3);
+    --shadow-card: 0 8px 16px hsl(0 0% 0% / 0.4);
+
+    --sidebar-background: 229 70% 8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 258 90% 66%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 229 50% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 229 40% 20%;
+    --sidebar-ring: 258 90% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Animated Content Rail */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-33.333%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scroll-right linear infinite;
+}
+
+/* ==========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ========================================== */
+
+/* Enhanced Focus Indicators */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip to content link - visible on focus */
+.sr-only:focus,
+.sr-only:focus-visible {
+  @apply not-sr-only;
+  @apply fixed top-4 left-4 z-[100];
+  @apply bg-primary text-primary-foreground;
+  @apply px-6 py-3 rounded-lg font-semibold;
+  @apply shadow-lg;
+  @apply transition-all;
+}
+
+/* Keyboard navigation indicators */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+/* Ensure interactive elements have visible focus */
+[role="button"]:focus-visible,
+[role="link"]:focus-visible {
+  @apply outline-2 outline-primary outline-offset-2;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 229 40% 50%;
+  }
+  
+  .dark {
+    --border: 229 40% 70%;
+  }
+  
+  button, a {
+    @apply border-2;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-scroll-left,
+  .animate-scroll-right {
+    animation: none;
+  }
+}
+
+/* Screen reader only - improved */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Force color scheme respect */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+  }
+}
+
+/* Touch target sizing for mobile */
+@media (pointer: coarse) {
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"],
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Improve text readability */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ensure sufficient color contrast for links */
+a:not([class]) {
+  @apply text-primary underline;
+  @apply hover:text-primary/80;
+}
+
+/* Keyboard-only focus (not mouse clicks) */
+.js-focus-visible :focus:not(.focus-visible) {
+  outline: none;
+}
+
+/* Auth Page Animations */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 40s linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scroll-right 40s linear infinite;
+}
+
+.animate-float {
+  animation: float var(--duration, 10s) ease-in-out infinite;
+}
