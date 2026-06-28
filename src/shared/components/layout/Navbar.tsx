@@ -64,7 +64,7 @@ const Navbar = () => {
     return validation.sanitized;
   }, [query]);
   // wire side effects for autosuggest
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+   
   useNavbarEffects(query, setSuggestions, setOpen, boxRef, (fn) => setActiveIndex((i) => fn(i)), setSearchExpanded, setQuery, searchFilter);
   
   // Close user menu dropdown when clicking outside

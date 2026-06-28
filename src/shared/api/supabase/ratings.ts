@@ -7,7 +7,7 @@ export async function setLike(media_id: number, media_type: "movie" | "tv", like
   
   if (!user) {
     const localData = localStorage.getItem(LOCAL_RATINGS_KEY);
-    let ratings: RatingRow[] = localData ? JSON.parse(localData) : [];
+    const ratings: RatingRow[] = localData ? JSON.parse(localData) : [];
     const index = ratings.findIndex(r => r.media_id === media_id);
     
     if (index >= 0) {
@@ -27,6 +27,7 @@ export async function setLike(media_id: number, media_type: "movie" | "tv", like
     return;
   }
 
+   
   const payload = { user_id: user.id, media_id, media_type, liked, title } as any;
   const { error } = await supabase.from("ratings").upsert(payload, { onConflict: "user_id,media_id" });
   if (error) throw error;
@@ -37,7 +38,7 @@ export async function setRating(media_id: number, media_type: "movie" | "tv", ra
   
   if (!user) {
     const localData = localStorage.getItem(LOCAL_RATINGS_KEY);
-    let ratings: RatingRow[] = localData ? JSON.parse(localData) : [];
+    const ratings: RatingRow[] = localData ? JSON.parse(localData) : [];
     const index = ratings.findIndex(r => r.media_id === media_id);
     
     if (index >= 0) {
@@ -57,6 +58,7 @@ export async function setRating(media_id: number, media_type: "movie" | "tv", ra
     return;
   }
 
+   
   const payload = { user_id: user.id, media_id, media_type, rating, title } as any;
   const { error } = await supabase.from("ratings").upsert(payload, { onConflict: "user_id,media_id" });
   if (error) throw error;

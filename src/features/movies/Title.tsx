@@ -136,7 +136,7 @@ const TitlePage = () => {
         imageUrl: toPoster(d.poster_path)
       });
     }
-  }, [d?.id, id, kind]); // Use d?.id so it only triggers once the specific title data is loaded
+  }, [d, id, kind, addToHistory]); // Include full dependencies
 
   const handleAddWatchlist = async () => {
     if (!d || !id || saving) return;

@@ -21,7 +21,7 @@ export async function addToWatchlist(item: Omit<WatchlistItem, "id" | "user_id" 
   if (!user) {
     // Fallback to local storage
     const localData = localStorage.getItem(LOCAL_WATCHLIST_KEY);
-    let watchlist: WatchlistItem[] = localData ? JSON.parse(localData) : [];
+    const watchlist: WatchlistItem[] = localData ? JSON.parse(localData) : [];
     
     // Check if already exists
     if (!watchlist.some(w => w.media_id === item.media_id)) {
@@ -37,6 +37,7 @@ export async function addToWatchlist(item: Omit<WatchlistItem, "id" | "user_id" 
   }
 
   const payload: TablesInsert<"watchlist"> = { ...item, user_id: user.id } as TablesInsert<"watchlist">;
+   
   const { error } = await (supabase as any)
     .from("watchlist")
     .upsert(payload, { onConflict: "user_id,media_id" });
