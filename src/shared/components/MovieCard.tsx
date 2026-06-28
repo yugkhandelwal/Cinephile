@@ -140,14 +140,14 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
         />
         
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/50 opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none lg:pointer-events-auto">
           {/* Play Icon */}
           <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white transform scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl border border-white/30">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </div>
           
           {/* Action Buttons (Top Right) */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 delay-100">
+          <div className="absolute top-2 right-2 flex flex-col gap-2 transform lg:translate-x-4 opacity-100 lg:opacity-0 lg:group-hover:translate-x-0 lg:group-hover:opacity-100 transition-all duration-300 delay-100 pointer-events-auto">
             <button 
               onClick={onLike} 
               onKeyDown={(e) => handleKeyDown(e, onLike)}
@@ -184,10 +184,10 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
       
       {/* Metadata */}
       <div className="pt-3 flex flex-col gap-1.5 px-1">
-        <h3 className="font-sans font-normal text-white text-base md:text-lg line-clamp-1 group-hover:text-primary transition-colors tracking-tight">
+        <h3 className="font-sans font-normal text-white text-sm md:text-base line-clamp-1 group-hover:text-primary transition-colors tracking-tight">
           {title}
         </h3>
-        <div className="flex items-center gap-2 text-[13px] text-gray-400 font-medium">
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs md:text-[13px] text-gray-400 font-medium whitespace-nowrap overflow-hidden">
           <div className="flex items-center gap-1.5 text-red-500">
             <Star className="w-4 h-4 fill-current" />
             <span className="text-gray-300">{rating?.toFixed(1) || rating || 'N/A'}</span>
