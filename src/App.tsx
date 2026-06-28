@@ -56,7 +56,7 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Sonner />

@@ -174,122 +174,13 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      {/* Animated Background with Trending Content */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        {/* Top Row - Scrolling Left */}
-        <div className="absolute top-0 left-0 right-0 h-[40%] flex gap-4 animate-scroll-left">
-          {trendingMovies && [...trendingMovies, ...trendingMovies].map((movie, index) => (
-            <div
-              key={`top-${movie.id}-${index}`}
-              className="flex-shrink-0 w-48 h-full relative rounded-lg overflow-hidden"
-            >
-              <img
-                src={movie.imageUrl || '/placeholder.svg'}
-                alt={movie.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom Row - Scrolling Right */}
-        <div className="absolute bottom-0 left-0 right-0 h-[40%] flex gap-4 animate-scroll-right">
-          {trendingMovies && [...trendingMovies.slice().reverse(), ...trendingMovies.slice().reverse()].map((movie, index) => (
-            <div
-              key={`bottom-${movie.id}-${index}`}
-              className="flex-shrink-0 w-48 h-full relative rounded-lg overflow-hidden"
-            >
-              <img
-                src={movie.imageUrl || '/placeholder.svg'}
-                alt={movie.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent" />
-            </div>
-          ))}
-        </div>
-
-        {/* Gradient Overlay for Content Visibility */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-background/95" />
-        
-        {/* Floating Particles */}
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-primary/20 rounded-full animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${5 + Math.random() * 10}s`
-            }}
-          />
-        ))}
-      </div>
-
       {/* Main Content */}
-      <div className="relative z-10 pt-24 pb-12 min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          
-          {/* Left Side - Branding */}
-          <div className="hidden lg:block space-y-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-10 h-10 text-primary animate-pulse" />
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                  Cinephile
-                </h1>
-              </div>
-              <p className="text-3xl font-semibold text-foreground">
-                Your Ultimate Movie & TV Experience
-              </p>
-              <p className="text-lg text-muted-foreground">
-                Discover, track, and enjoy millions of movies and TV shows. Join our community of film enthusiasts.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl p-6 space-y-2">
-                <TrendingUp className="w-8 h-8 text-primary" />
-                <h3 className="font-semibold text-xl">Trending Now</h3>
-                <p className="text-sm text-muted-foreground">
-                  Stay updated with the latest trending content
-                </p>
-              </div>
-              <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl p-6 space-y-2">
-                <CheckCircle2 className="w-8 h-8 text-green-500" />
-                <h3 className="font-semibold text-xl">Watchlist</h3>
-                <p className="text-sm text-muted-foreground">
-                  Never lose track of what you want to watch
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-8 text-center">
-              <div>
-                <p className="text-3xl font-bold text-primary">10M+</p>
-                <p className="text-sm text-muted-foreground">Movies & Shows</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-purple-500">500K+</p>
-                <p className="text-sm text-muted-foreground">Active Users</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-pink-500">4.9★</p>
-                <p className="text-sm text-muted-foreground">User Rating</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Side - Auth Form */}
-          <div className="w-full max-w-md mx-auto lg:mx-0">
-            <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 shadow-2xl">
+      <div className="flex-1 flex items-center justify-center px-4 py-24">
+        <div className="w-full max-w-md mx-auto">
+          <div className="bg-transparent border border-white/5 rounded-2xl p-8">
               
               {/* Tab Switcher */}
               <div className="flex gap-2 p-1 bg-muted/50 rounded-lg mb-6">
@@ -316,7 +207,7 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2 mb-6">
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-3xl font-heading font-bold text-white tracking-tight">
                   {isSignUp ? 'Create Your Account' : 'Welcome Back!'}
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -436,14 +327,11 @@ const Auth = () => {
                 <button
                   onClick={isSignUp ? onSignUp : onSignIn}
                   disabled={loading}
-                  className="w-full h-11 bg-gradient-to-r from-primary via-purple-500 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl relative overflow-hidden group"
+                  className="w-full h-11 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                 >
-                  <span className="relative z-10">
-                    {loading
-                      ? isSignUp ? 'Creating Account...' : 'Signing In...'
-                      : isSignUp ? 'Create Account' : 'Sign In'}
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  {loading
+                    ? isSignUp ? 'Creating Account...' : 'Signing In...'
+                    : isSignUp ? 'Create Account' : 'Sign In'}
                 </button>
 
                 {/* Divider */}
@@ -495,7 +383,6 @@ const Auth = () => {
             </div>
           </div>
         </div>
-      </div>
       
       <Footer />
     </div>

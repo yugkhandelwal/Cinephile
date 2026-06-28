@@ -38,6 +38,7 @@ export interface WatchProvider {
 }
 
 export interface WatchProviderRegion {
+  link?: string;
   flatrate?: WatchProvider[];
   rent?: WatchProvider[];
   buy?: WatchProvider[];
@@ -74,7 +75,7 @@ export interface TmdbMovie {
     cast: Array<{ id: number; name: string; character?: string; profile_path: string | null }>; 
     crew: CrewMember[] 
   };
-  images?: { backdrops: Array<{ file_path: string }>; posters: Array<{ file_path: string }> };
+  images?: { backdrops: Array<{ file_path: string }>; posters: Array<{ file_path: string }>; logos?: Array<{ file_path: string; iso_639_1: string | null }> };
   recommendations?: { results: TmdbMovie[] };
   ['watch/providers']?: WatchProviderResponse;
 }

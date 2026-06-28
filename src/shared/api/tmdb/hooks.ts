@@ -11,6 +11,8 @@ export interface UIMediaItem {
   year: string;
   rating: number;
   imageUrl: string;
+  backdropUrl?: string;
+  description?: string;
 }
 
 function map(items: TmdbMovie[]): UIMediaItem[] {
@@ -21,12 +23,14 @@ function map(items: TmdbMovie[]): UIMediaItem[] {
     year: toYear(m),
     rating: Number(m.vote_average?.toFixed?.(1) ?? 0),
     imageUrl: toPoster(m.poster_path),
+    backdropUrl: m.backdrop_path ? `https://image.tmdb.org/t/p/original${m.backdrop_path}` : undefined,
+    description: m.overview,
   }));
 }
 
 export function useTrendingMovies(page = 1) {
   return useQuery({
-    queryKey: ["tmdb", "movies", "trending", page],
+    queryKey: ["tmdb", "movies", "trending", "v2", page],
     queryFn: async () => map((await tmdb.movies.trending(page)).results),
   });
 }

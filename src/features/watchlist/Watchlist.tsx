@@ -15,8 +15,6 @@ const Watchlist = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    
     let cancelled = false;
     
     (async () => {
@@ -48,27 +46,21 @@ const Watchlist = () => {
     <div id="main" className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="pt-24 container mx-auto px-4 py-12">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <BookmarkPlus className="w-10 h-10 text-primary" />
-            <h1 className="text-4xl md:text-5xl font-bold">
-              My <span className="text-primary">Watchlist</span>
+      <div className="pt-24">
+        {/* Modern Header */}
+        <div className="bg-transparent pt-8 pb-6 mb-8">
+          <div className="max-w-6xl mx-auto px-4 flex items-center gap-3">
+            <BookmarkPlus className="w-8 h-8 text-white" />
+            <h1 className="text-3xl md:text-4xl font-heading font-bold text-white tracking-tight">
+              Watchlist
             </h1>
           </div>
-          <p className="text-lg text-muted-foreground">
-            Keep track of movies and shows you want to watch
-          </p>
         </div>
-
-        {!user && (
-          <div className="text-center py-20 text-muted-foreground">Sign in to view your watchlist.</div>
-        )}
         {error && (
           <div className="text-center py-4 text-destructive">{error}</div>
         )}
         {items && items.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto px-4">
             {items.map((item) => (
               <div key={item.media_id} className="relative group">
                 <MovieCard

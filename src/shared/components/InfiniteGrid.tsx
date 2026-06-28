@@ -68,7 +68,7 @@ export function InfiniteGrid<T>(props: InfiniteGridProps<T>) {
 
       {/* Loading State */}
       {isLoading && items.length === 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
           {Array.from({ length: loaderCount }).map((_, i) => (
             <div key={i} className="w-full">
               <Skeleton className="w-full aspect-[2/3] rounded-xl" />
@@ -100,7 +100,7 @@ export function InfiniteGrid<T>(props: InfiniteGridProps<T>) {
       {/* Grid Content */}
       {!isLoading && !isError && items.length > 0 && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
             {items.map((item, idx) => (
               <div key={idx} className="w-full">
                 {renderItem(item)}

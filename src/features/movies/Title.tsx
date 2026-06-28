@@ -1,13 +1,13 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
 import MovieCard from "@/shared/components/MovieCard";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDetails, useSeason } from "@/shared/api/tmdb/hooks";
 import { toPoster, pickRegionProvider } from "@/shared/api/tmdb/client";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Input } from "@/shared/components/ui/input";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
-import { Star, Calendar, Clock, Tv, Play, Heart, BookmarkPlus, Share2, Loader2, Check, Copy } from "lucide-react";
+import { Star, Calendar, Clock, Tv, Play, Heart, BookmarkPlus, Share2, Loader2, Check, PlayCircle, ArrowLeft, Volume2, VolumeX, ArrowDownUp, Search, Download } from "lucide-react";
 import { addToWatchlist } from "@/shared/api/supabase/watchlist";
 import { setLike } from "@/shared/api/supabase/ratings";
 import { useAuth } from "@/context/AuthProvider";
@@ -15,10 +15,89 @@ import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { toast } from "@/shared/hooks/use-toast";
+import { Dialog, DialogContent, DialogTrigger } from "@/shared/components/ui/dialog";
 import { TmdbSeason, TmdbEpisode } from "@/shared/api/tmdb/types";
+import ReactPlayer from "react-player";
+import { useWatchHistory } from "@/shared/hooks/useWatchHistory";
+
+const getDirectProviderLink = (providerName: string, title: string, fallbackLink: string = '#') => {
+  if (!title) return fallbackLink;
+  
+  const query = encodeURIComponent(title);
+  const name = providerName.toLowerCase();
+  
+  if (name.includes('netflix')) return `https://www.netflix.com/search?q=${query}`;
+  if (name.includes('amazon') || name.includes('prime')) return `https://www.amazon.com/s?k=${query}&i=instant-video`;
+  if (name.includes('disney')) return `https://www.disneyplus.com/search?q=${query}`;
+  if (name.includes('hulu')) return `https://www.hulu.com/search?q=${query}`;
+  if (name.includes('apple tv') || name.includes('apple')) return `https://tv.apple.com/us/search?q=${query}`;
+  if (name.includes('hbo') || name.includes('max')) return `https://play.max.com/search?q=${query}`;
+  if (name.includes('peacock')) return `https://www.peacocktv.com/watch/search?q=${query}`;
+  if (name.includes('paramount')) return `https://www.paramountplus.com/search/?q=${query}`;
+  if (name.includes('crunchyroll')) return `https://www.crunchyroll.com/search?q=${query}`;
+  if (name.includes('hotstar')) return `https://www.hotstar.com/in/explore?search_query=${query}`;
+  if (name.includes('zee5')) return `https://www.zee5.com/search?q=${query}`;
+  if (name.includes('jio')) return `https://www.jiocinema.com/search?q=${query}`;
+  if (name.includes('sony')) return `https://www.sonyliv.com/search?q=${query}`;
+  
+  return fallbackLink;
+};
 
 const TitlePage = () => {
+  const navigate = useNavigate();
+  const playerRef = useRef<HTMLIFrameElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsPlaying(true);
+  }, []);
+
+  const toggleMute = () => {
+    if (playerRef.current && playerRef.current.contentWindow) {
+      playerRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: isMuted ? 'unMute' : 'mute', args: [] }),
+        '*'
+      );
+    }
+    setIsMuted(!isMuted);
+  };
+
+  const [isInactive, setIsInactive] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      setIsInactive(false);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsInactive(true);
+      }, 4000);
+    };
+
+    resetTimer();
+
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('touchstart', resetTimer);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('touchstart', resetTimer);
+    };
+  }, []);
+
   const { type, id } = useParams();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setIsVideoLoaded(false);
+  }, [id]);
+
   const kind = (type === "tv" ? "tv" : "movie") as "movie" | "tv";
   const { data, isLoading, isError, error } = useDetails(kind, id);
   const { user } = useAuth();
@@ -44,8 +123,23 @@ const TitlePage = () => {
   const d = data?.details;
   useDocumentTitle(d?.title || d?.name ? `${d?.title || d?.name}` : "Title");
 
+  const { addToHistory } = useWatchHistory();
+
+  useEffect(() => {
+    if (d && id) {
+      addToHistory({
+        id: Number(id),
+        mediaType: kind,
+        title: d.title || d.name || '',
+        year: (d.release_date || d.first_air_date || '').slice(0, 4),
+        rating: d.vote_average || 0,
+        imageUrl: toPoster(d.poster_path)
+      });
+    }
+  }, [d?.id, id, kind]); // Use d?.id so it only triggers once the specific title data is loaded
+
   const handleAddWatchlist = async () => {
-    if (!user || !d || !id || saving) return;
+    if (!d || !id || saving) return;
     
     setSaving(true);
     try {
@@ -76,7 +170,7 @@ const TitlePage = () => {
   };
 
   const handleLike = async () => {
-    if (!user || !d || !id || liking) return;
+    if (!d || !id || liking) return;
     
     setLiking(true);
     try {
@@ -135,19 +229,17 @@ const TitlePage = () => {
 
   return (
     <div id="main" className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-16">
+      <div className="w-full">
         {isLoading && (
-          <div className="container mx-auto px-4 py-12">
+          <div className="pt-24 container mx-auto px-4 py-12">
             <div className="animate-pulse space-y-6">
-              <Skeleton className="h-96 w-full" />
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-96 w-full rounded-2xl" />
+              <Skeleton className="h-40 w-full rounded-2xl" />
             </div>
           </div>
         )}
         {isError && (
-          <div className="container mx-auto px-4 py-12">
+          <div className="pt-24 container mx-auto px-4 py-12">
             <div className="bg-destructive/10 border border-destructive rounded-lg p-6 text-center">
               <p className="text-destructive font-semibold mb-2">Failed to load content</p>
               <p className="text-sm text-muted-foreground">{String((error as Error)?.message || 'Please try again later')}</p>
@@ -156,150 +248,175 @@ const TitlePage = () => {
         )}
         {d && (
           <>
-            {/* Hero Section with Backdrop */}
-            <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ 
-                  backgroundImage: `url(${d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : '/placeholder.svg'})` 
-                }}
+            {/* Cinematic Hero Section */}
+            <div className="relative w-full h-[85vh] min-h-[600px] overflow-hidden bg-black group">
+              {/* Back Button */}
+              <button 
+                onClick={() => navigate(-1)}
+                className={`absolute top-6 left-6 md:top-8 md:left-8 lg:left-12 z-50 p-3 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all duration-700 shadow-lg hover:scale-110 active:scale-95 ${isInactive ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
-                <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/40" />
-              </div>
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+
+              {(() => {
+                const trailer = d.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+                return (
+                  <>
+                    {/* Always render banner as fallback/loading background */}
+                    <div
+                      className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${trailer && isVideoLoaded ? 'opacity-0' : 'opacity-60'}`}
+                      style={{ 
+                        backgroundImage: `url(${d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : '/placeholder.svg'})` 
+                      }}
+                    />
+                    
+                    {/* Render trailer on top, fading in once loaded */}
+                    {trailer && (
+                      <div className={`absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-black flex items-center justify-center transition-opacity duration-1000 ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}>
+                        <iframe
+                          ref={playerRef}
+                          onLoad={() => {
+                            setTimeout(() => setIsVideoLoaded(true), 1500);
+                          }}
+                          className="w-[150vw] h-[150vh] max-w-none opacity-70 pointer-events-none"
+                          src={`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&disablekb=1&iv_load_policy=3&loop=1&playlist=${trailer.key}`}
+                          title="Trailer"
+                          allow="autoplay; encrypted-media"
+                          tabIndex={-1}
+                          aria-hidden="true"
+                        />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* Gradients to seamlessly blend the image into the background */}
+              <div className={`absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none transition-opacity duration-1000 ${isInactive ? 'opacity-40' : 'opacity-100'}`} />
+              <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/20 to-transparent pointer-events-none transition-opacity duration-1000 ${isInactive ? 'opacity-0' : 'opacity-100'}`} />
               
               {/* Content Overlay */}
-              <div className="relative container mx-auto px-4 h-full flex items-end pb-12">
-                <div className="flex flex-col md:flex-row gap-6 w-full">
-                  {/* Poster */}
-                  <div className="flex-shrink-0">
-                    <img 
-                      src={toPoster(d.poster_path)} 
-                      alt={d.title || d.name || 'Poster'} 
-                      loading="eager"
-                      className="w-48 md:w-64 rounded-xl shadow-2xl border-2 border-border/50"
-                    />
-                  </div>
+              <div className="relative w-full h-full flex items-end pb-16 md:pb-24">
+                <div className="pl-6 md:pl-16 lg:pl-24 pr-6 max-w-4xl">
                   
                   {/* Title Info */}
-                  <div className="flex-1 flex flex-col justify-end text-white">
-                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-3 drop-shadow-lg">
-                      {d.title || d.name}
-                    </h1>
+                  <div className={`flex flex-col text-white transition-all duration-1000 origin-bottom-left ${isInactive ? 'scale-75 translate-y-8' : 'scale-100'}`}>
+                    {(() => {
+                      const logos = d.images?.logos;
+                      const enLogo = logos?.find(l => l.iso_639_1 === 'en') || logos?.[0];
+                      
+                      return enLogo ? (
+                        <div className="mb-6 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
+                          <img 
+                            src={`https://image.tmdb.org/t/p/w500${enLogo.file_path}`} 
+                            alt={d.title || d.name} 
+                            className="w-full h-auto object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]"
+                          />
+                        </div>
+                      ) : (
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-heading tracking-wide drop-shadow-2xl">
+                          {d.title || d.name}
+                        </h1>
+                      );
+                    })()}
                     
                     {/* Meta Info */}
-                    <div className="flex flex-wrap items-center gap-3 mb-4 text-sm md:text-base">
+                    <div className={`flex flex-wrap items-center gap-4 mb-8 text-sm md:text-base font-medium transition-all duration-1000 ${isInactive ? 'opacity-0 h-0 overflow-hidden !mb-0' : 'opacity-100 h-6'}`}>
+                      {d.vote_average > 0 && (
+                        <div className="flex items-center gap-1.5 text-yellow-500">
+                          <Star className="w-5 h-5 fill-current" />
+                          <span className="text-white">{d.vote_average.toFixed(1)}</span>
+                        </div>
+                      )}
+
                       {(d.release_date || d.first_air_date) && (
-                        <div className="flex items-center gap-1.5 bg-background/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                          <Calendar className="w-4 h-4" />
+                        <div className="flex items-center gap-1.5 text-gray-300">
                           <span>{(d.release_date || d.first_air_date || '').slice(0, 4)}</span>
                         </div>
                       )}
                       
-                      {d.runtime && (
-                        <div className="flex items-center gap-1.5 bg-background/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                          <Clock className="w-4 h-4" />
+                      {d.runtime > 0 && (
+                        <div className="flex items-center gap-1.5 text-gray-300">
                           <span>{Math.floor(d.runtime / 60)}h {d.runtime % 60}m</span>
                         </div>
                       )}
                       
-                      {d.number_of_seasons && (
-                        <div className="flex items-center gap-1.5 bg-background/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                          <Tv className="w-4 h-4" />
+                      {d.number_of_seasons > 0 && (
+                        <div className="flex items-center gap-1.5 text-gray-300">
                           <span>{d.number_of_seasons} Season{d.number_of_seasons > 1 ? 's' : ''}</span>
                         </div>
                       )}
                       
-                      {d.vote_average && (
-                        <div className="flex items-center gap-1.5 bg-yellow-500/90 backdrop-blur-sm px-3 py-1.5 rounded-full font-semibold">
-                          <Star className="w-4 h-4 fill-current" />
-                          <span>{d.vote_average.toFixed(1)}</span>
+                      {/* Genres */}
+                      {d.genres && d.genres.length > 0 && (
+                        <div className="flex flex-wrap gap-2 items-center ml-2 border-l border-white/20 pl-4">
+                          {d.genres.slice(0, 3).map((g) => (
+                            <span key={g.id} className="text-gray-300">
+                              {g.name}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>
                     
-                    {/* Genres */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {d.genres?.map((g) => (
-                        <Badge key={g.id} variant="secondary" className="bg-background/40 backdrop-blur-sm border-border/50">
-                          {g.name}
-                        </Badge>
-                      ))}
-                    </div>
-                    
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-3">
+                    <div className={`flex flex-wrap items-center gap-4 transition-all duration-1000 ${isInactive ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-xl">
+                            <PlayCircle className="w-6 h-6" />
+                            Play Now
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[90vw] w-[1200px] h-[80vh] p-0 bg-black border-zinc-800">
+                          <iframe 
+                            src={`https://www.vidking.net/embed/${kind}/${id}${kind === 'tv' ? '/1/1' : ''}?color=9146ff&autoPlay=true&nextEpisode=true&episodeSelector=true`}
+                            width="100%" 
+                            height="100%" 
+                            frameBorder="0" 
+                            allowFullScreen
+                            className="w-full h-full rounded-md"
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      
                       <button
                         onClick={handleAddWatchlist}
                         disabled={!user || saving || saved}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 bg-white/10 backdrop-blur-md text-white border border-white/20 px-6 py-4 rounded-full font-medium hover:bg-white/20 transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         aria-label={saving ? "Adding to watchlist..." : saved ? "Added to watchlist" : "Add to Watchlist"}
                       >
-                        {saving ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Adding...
-                          </>
-                        ) : saved ? (
-                          <>
-                            <Check className="w-5 h-5" />
-                            Added!
-                          </>
-                        ) : (
-                          <>
-                            <BookmarkPlus className="w-5 h-5" />
-                            Add to Watchlist
-                          </>
-                        )}
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <Check className="w-5 h-5" /> : <BookmarkPlus className="w-5 h-5" />}
+                        {saved ? "Added" : "Watchlist"}
                       </button>
                       
                       <button
                         onClick={handleLike}
                         disabled={!user || liking || liked}
-                        className="flex items-center gap-2 bg-background/40 backdrop-blur-sm text-white border border-border/50 px-6 py-3 rounded-lg font-semibold hover:bg-destructive hover:border-destructive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center w-14 h-14 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-red-500/80 hover:border-red-500 hover:text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         aria-label={liking ? "Liking..." : liked ? "Liked" : "Like"}
                       >
-                        {liking ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Liking...
-                          </>
-                        ) : liked ? (
-                          <>
-                            <Check className="w-5 h-5" />
-                            Liked!
-                          </>
-                        ) : (
-                          <>
-                            <Heart className="w-5 h-5" />
-                            Like
-                          </>
-                        )}
+                        {liking ? <Loader2 className="w-5 h-5 animate-spin" /> : liked ? <Check className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
                       </button>
                       
                       <button
                         onClick={handleShare}
                         disabled={sharing || shared}
-                        className="flex items-center gap-2 bg-background/40 backdrop-blur-sm text-white border border-border/50 px-6 py-3 rounded-lg font-semibold hover:bg-accent hover:border-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center w-14 h-14 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-white/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         aria-label={sharing ? "Sharing..." : shared ? "Shared" : "Share"}
                       >
-                        {sharing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Sharing...
-                          </>
-                        ) : shared ? (
-                          <>
-                            <Check className="w-5 h-5" />
-                            Shared!
-                          </>
-                        ) : (
-                          <>
-                            <Share2 className="w-5 h-5" />
-                            Share
-                          </>
-                        )}
+                        {sharing ? <Loader2 className="w-5 h-5 animate-spin" /> : shared ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
                       </button>
+
+                      {d.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer') && (
+                        <button
+                          onClick={toggleMute}
+                          className="flex items-center justify-center w-14 h-14 bg-black/40 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-black/60 transition-all hover:scale-105 active:scale-95 md:ml-4"
+                          aria-label={isMuted ? "Unmute Trailer" : "Mute Trailer"}
+                        >
+                          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -320,200 +437,140 @@ const TitlePage = () => {
               ].slice(0, 8).map((p) => ({ logo: p.logo_path, name: p.provider_name }));
               if (!flat.length) return null;
               return (
-                <div className="bg-card/50 backdrop-blur-sm border-y border-border py-6">
-                  <div className="container mx-auto px-4">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Play className="w-5 h-5 text-primary" />
-                      Available on
-                    </h3>
-                    <div className="flex flex-wrap gap-3">
-                      {flat.map((p, i) => (
-                        <div key={i} className="flex items-center gap-2 bg-background border border-border rounded-lg px-4 py-2 hover:border-primary transition-colors">
-                          <img 
-                            src={p.logo ? `https://image.tmdb.org/t/p/w92${p.logo}` : '/placeholder.svg'} 
-                            loading="lazy" 
-                            alt={p.name}
-                            className="w-8 h-8 rounded object-cover" 
-                          />
-                          <span className="text-sm font-medium">{p.name}</span>
-                        </div>
-                      ))}
-                    </div>
+                <div className="px-6 md:px-16 lg:px-24 max-w-5xl mt-12 mb-4">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2 font-heading text-white">
+                    <Play className="w-6 h-6 text-white" />
+                    Available on
+                  </h3>
+                  <div className="flex flex-wrap gap-4">
+                    {flat.map((p, i) => (
+                      <a 
+                        key={i} 
+                        href={getDirectProviderLink(p.name, d.title || d.name || '', entry.link)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-5 py-2.5 hover:bg-white/20 hover:border-white/30 transition-all shadow-lg cursor-pointer hover:scale-105 active:scale-95 group"
+                      >
+                        <img 
+                          src={p.logo ? `https://image.tmdb.org/t/p/w92${p.logo}` : '/placeholder.svg'} 
+                          loading="lazy" 
+                          alt={p.name}
+                          className="w-8 h-8 rounded-full object-cover group-hover:shadow-md transition-shadow" 
+                        />
+                        <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">{p.name}</span>
+                      </a>
+                    ))}
                   </div>
                 </div>
               );
             })()}
 
-            {/* Tabs Section */}
-            <div className="container mx-auto px-4 py-12">
-              <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="mb-6 bg-card border border-border p-1">
-                  <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    Overview
-                  </TabsTrigger>
-                  {kind === "tv" && d.seasons && d.seasons.length > 0 && (
-                    <TabsTrigger value="seasons" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                      Seasons
-                    </TabsTrigger>
-                  )}
-                  <TabsTrigger value="cast" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    Cast & Crew
-                  </TabsTrigger>
-                  <TabsTrigger value="videos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    Videos
-                  </TabsTrigger>
-                  <TabsTrigger value="similar" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    Similar
-                  </TabsTrigger>
-                </TabsList>
+            {/* Content Sections */}
+            <div className="flex flex-col gap-12 pb-24">
+              {/* Seasons */}
+              {kind === "tv" && d.seasons && d.seasons.length > 0 && (
+                <div className="px-6 md:px-16 lg:px-24 max-w-5xl mt-8">
+                  <h2 className="text-2xl font-bold mb-4 font-heading text-white">Episodes</h2>
+                  <SeasonsTab tvId={id} seasons={d.seasons || []} />
+                </div>
+              )}
 
-                <TabsContent value="overview" className="space-y-8">
-                  <div className="grid md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-6">
-                      <div>
-                        <h2 className="text-2xl font-bold mb-4">Storyline</h2>
-                        <p className="text-base leading-relaxed text-muted-foreground">
-                          {d.overview || 'No overview available.'}
-                        </p>
-                      </div>
-                      
-                      {/* Additional Info */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {d.status && (
-                          <div className="bg-card border border-border rounded-lg p-4">
-                            <p className="text-xs text-muted-foreground mb-1">Status</p>
-                            <p className="font-semibold">{d.status}</p>
-                          </div>
-                        )}
-                        {(d as any).original_language && (
-                          <div className="bg-card border border-border rounded-lg p-4">
-                            <p className="text-xs text-muted-foreground mb-1">Language</p>
-                            <p className="font-semibold">{(d as any).original_language.toUpperCase()}</p>
-                          </div>
-                        )}
-                        {(d as any).budget && (d as any).budget > 0 && (
-                          <div className="bg-card border border-border rounded-lg p-4">
-                            <p className="text-xs text-muted-foreground mb-1">Budget</p>
-                            <p className="font-semibold">${((d as any).budget / 1000000).toFixed(1)}M</p>
-                          </div>
-                        )}
-                        {(d as any).revenue && (d as any).revenue > 0 && (
-                          <div className="bg-card border border-border rounded-lg p-4">
-                            <p className="text-xs text-muted-foreground mb-1">Revenue</p>
-                            <p className="font-semibold">${((d as any).revenue / 1000000).toFixed(1)}M</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
+              {/* Storyline & Details */}
+              <div className="px-6 md:px-16 lg:px-24 max-w-5xl">
+                <h2 className="text-2xl font-bold mb-4 font-heading text-white">Storyline</h2>
+                <p className="text-lg leading-relaxed text-gray-300">
+                  {d.overview || 'No overview available.'}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
+                  {d.status && (
                     <div>
-                      <h2 className="text-xl font-semibold mb-4">Official Trailer</h2>
-                      {d.videos?.results?.find((v)=> v.site === 'YouTube' && v.type === 'Trailer') ? (
-                        <div className="aspect-video rounded-xl overflow-hidden border-2 border-border shadow-lg">
-                          <iframe
-                            className="w-full h-full"
-                            src={`https://www.youtube.com/embed/${d.videos!.results.find((v)=> v.site==='YouTube' && v.type==='Trailer')!.key}`}
-                            title="Trailer"
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            referrerPolicy="strict-origin-when-cross-origin"
-                            allowFullScreen
+                      <p className="text-sm text-gray-500 mb-1">Status</p>
+                      <p className="font-medium text-gray-200">{d.status}</p>
+                    </div>
+                  )}
+                  {(d as any).original_language && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Language</p>
+                      <p className="font-medium text-gray-200">{(d as any).original_language.toUpperCase()}</p>
+                    </div>
+                  )}
+                  {(d as any).budget && (d as any).budget > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Budget</p>
+                      <p className="font-medium text-gray-200">${((d as any).budget / 1000000).toFixed(1)}M</p>
+                    </div>
+                  )}
+                  {(d as any).revenue && (d as any).revenue > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Revenue</p>
+                      <p className="font-medium text-gray-200">${((d as any).revenue / 1000000).toFixed(1)}M</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Top Billed Cast */}
+              {d.credits?.cast?.length > 0 && (
+                <div className="w-full">
+                  <div className="px-6 md:px-16 lg:px-24 mb-4">
+                    <h2 className="text-2xl font-bold font-heading text-white">Top Cast</h2>
+                  </div>
+                  <div className="flex overflow-x-auto gap-4 pl-6 md:pl-16 lg:pl-24 scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
+                    {d.credits.cast.slice(0, 18).map((c) => (
+                      <div key={c.id} className="flex-none w-[120px] sm:w-[140px] snap-start group text-center cursor-pointer">
+                        <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden border-2 border-transparent group-hover:border-white transition-all shadow-lg mb-3 bg-white/5">
+                          <img 
+                            src={c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : '/placeholder.svg'} 
+                            loading="lazy" 
+                            alt={c.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
                           />
                         </div>
-                      ) : (
-                        <div className="aspect-video bg-card border border-border rounded-xl flex items-center justify-center">
-                          <p className="text-sm text-muted-foreground">No trailer available</p>
-                        </div>
-                      )}
-                    </div>
+                        <p className="text-sm font-semibold text-gray-200 line-clamp-1">{c.name}</p>
+                        {c.character && (
+                          <p className="text-xs text-gray-500 line-clamp-2 mt-1">{c.character}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </TabsContent>
+                </div>
+              )}
 
-                {kind === "tv" && (
-                  <TabsContent value="seasons">
-                    <SeasonsTab tvId={id} seasons={d.seasons || []} />
-                  </TabsContent>
-                )}
-
-                <TabsContent value="cast">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-6">Top Billed Cast</h2>
-                    {d.credits?.cast?.length ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                        {d.credits.cast.slice(0, 18).map((c) => (
-                          <div key={c.id} className="group bg-card border border-border rounded-xl overflow-hidden hover:border-primary transition-all hover:shadow-lg">
-                            <div className="aspect-[2/3] overflow-hidden">
-                              <img 
-                                src={c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : '/placeholder.svg'} 
-                                loading="lazy" 
-                                alt={c.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                              />
-                            </div>
-                            <div className="p-3">
-                              <p className="text-sm font-semibold line-clamp-1">{c.name}</p>
-                              {c.character && (
-                                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{c.character}</p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">No cast information available.</p>
-                    )}
+              {/* Official Trailer */}
+              {d.videos?.results?.find((v)=> v.site === 'YouTube' && v.type === 'Trailer') && (
+                <div className="px-6 md:px-16 lg:px-24 max-w-5xl">
+                  <h2 className="text-2xl font-bold mb-6 font-heading text-white">Official Trailer</h2>
+                  <div className="aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                    <iframe
+                      className="w-full h-full"
+                      src={`https://www.youtube.com/embed/${d.videos!.results.find((v)=> v.site==='YouTube' && v.type==='Trailer')!.key}`}
+                      title="Trailer"
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    />
                   </div>
-                </TabsContent>
+                </div>
+              )}
 
-                <TabsContent value="videos">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-6">Videos & Clips</h2>
-                    {d.videos?.results?.filter((v)=> v.site==='YouTube').length ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {d.videos.results.filter((v)=> v.site==='YouTube').slice(0, 12).map((v) => (
-                          <div key={`${v.site}-${v.key}`} className="group">
-                            <div className="aspect-video rounded-xl overflow-hidden border-2 border-border hover:border-primary transition-colors shadow-md">
-                              <iframe 
-                                className="w-full h-full" 
-                                src={`https://www.youtube.com/embed/${v.key}`} 
-                                title={v.name} 
-                                loading="lazy" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                referrerPolicy="strict-origin-when-cross-origin" 
-                                allowFullScreen 
-                              />
-                            </div>
-                            <p className="text-sm font-medium mt-2 line-clamp-2 group-hover:text-primary transition-colors">
-                              {v.name}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 bg-card border border-border rounded-xl">
-                        <p className="text-muted-foreground">No videos available</p>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="similar">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
-                    {data.recommendations?.length ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-                        {data.recommendations.slice(0, 18).map((m) => (
-                          <MovieCard key={`${m.mediaType}-${m.id}`} {...m} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 bg-card border border-border rounded-xl">
-                        <p className="text-muted-foreground">No similar titles found</p>
-                      </div>
-                    )}
+
+              {/* You May Also Like */}
+              {data.recommendations?.length > 0 && (
+                <div className="w-full">
+                  <div className="px-6 md:px-16 lg:px-24 mb-4">
+                    <h2 className="text-2xl font-bold font-heading text-white">You May Also Like</h2>
                   </div>
-                </TabsContent>
-              </Tabs>
+                  <div className="flex overflow-x-auto gap-4 pl-6 md:pl-16 lg:pl-24 scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
+                    {data.recommendations.slice(0, 18).map((m) => (
+                      <div key={`${m.mediaType}-${m.id}`} className="flex-none w-[160px] sm:w-[200px] md:w-[240px] snap-start">
+                        <MovieCard {...m} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -531,157 +588,130 @@ interface SeasonsTabProps {
 
 const SeasonsTab = ({ tvId, seasons }: SeasonsTabProps) => {
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { data: seasonData, isLoading } = useSeason(tvId, selectedSeason);
 
-  // Filter out special seasons (season 0 is usually specials)
   const regularSeasons = seasons.filter(s => s.season_number > 0);
 
+  const filteredEpisodes = (seasonData?.episodes || [])
+    .filter((ep: TmdbEpisode) => ep.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a: TmdbEpisode, b: TmdbEpisode) => {
+      if (sortOrder === 'asc') return a.episode_number - b.episode_number;
+      return b.episode_number - a.episode_number;
+    });
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Seasons & Episodes</h2>
-        <Badge variant="secondary" className="text-sm">
-          {regularSeasons.length} {regularSeasons.length === 1 ? 'Season' : 'Seasons'}
-        </Badge>
+    <div className="space-y-6 pt-4">
+      {/* Control Bar */}
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <Select value={selectedSeason.toString()} onValueChange={(val) => setSelectedSeason(parseInt(val))}>
+          <SelectTrigger className="w-full sm:w-[180px] bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white font-medium h-12 rounded-xl transition-colors focus:ring-0 focus:ring-offset-0">
+            <SelectValue placeholder="Select Season" />
+          </SelectTrigger>
+          <SelectContent className="bg-black/90 backdrop-blur-xl border-white/10 text-white rounded-xl shadow-2xl">
+            {regularSeasons.map((season) => (
+              <SelectItem key={season.season_number} value={season.season_number.toString()} className="hover:bg-white/10 focus:bg-white/10 cursor-pointer">
+                Season {season.season_number}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="relative flex-1 w-full group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-white transition-colors" />
+          <Input 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search episode..." 
+            className="w-full pl-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder:text-gray-500 rounded-xl focus-visible:ring-0 focus-visible:border-white/30 hover:bg-white/10 transition-colors shadow-inner"
+          />
+        </div>
+
+        <button 
+          onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+          className="h-12 w-12 flex items-center justify-center bg-white/5 backdrop-blur-md border border-white/10 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all shrink-0 active:scale-95"
+        >
+          <ArrowDownUp className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Season Selector */}
-      <div className="flex gap-2 flex-wrap">
-        {regularSeasons.map((season) => (
-          <button
-            key={season.season_number}
-            onClick={() => setSelectedSeason(season.season_number)}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-              selectedSeason === season.season_number
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                : 'bg-card border border-border hover:border-primary hover:bg-accent'
-            }`}
-          >
-            Season {season.season_number}
-          </button>
-        ))}
-      </div>
-
-      {/* Season Details */}
+      {/* Episodes List */}
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-4">
-              <Skeleton className="h-6 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-full" />
+            <div key={i} className="h-32 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-6">
+              <Skeleton className="w-40 md:w-48 h-full rounded-xl bg-white/5" />
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-6 w-1/3 bg-white/5 rounded-md" />
+                <Skeleton className="h-4 w-16 bg-white/5 rounded-md" />
+                <Skeleton className="h-4 w-full bg-white/5 rounded-md" />
+              </div>
             </div>
           ))}
         </div>
-      ) : seasonData ? (
-        <div className="space-y-4">
-          {/* Season Overview */}
-          {seasonData.overview && (
-            <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Tv className="w-5 h-5 text-primary" />
-                {seasonData.name}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">{seasonData.overview}</p>
-              {seasonData.air_date && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  First Aired: {new Date(seasonData.air_date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+      ) : filteredEpisodes.length > 0 ? (
+        <div className="space-y-3">
+          {filteredEpisodes.map((episode: TmdbEpisode) => (
+            <Dialog key={episode.id}>
+              <DialogTrigger asChild>
+                <div 
+                  className="flex items-center gap-6 p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl hover:bg-white/10 transition-colors group cursor-pointer text-left w-full"
+                >
+                  <div className="relative shrink-0 overflow-hidden rounded-xl border border-white/10 group-hover:border-white/20 transition-colors">
+                    {episode.still_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
+                        alt={episode.name}
+                        className="w-40 md:w-56 aspect-[16/9] object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-40 md:w-56 aspect-[16/9] bg-zinc-800 flex items-center justify-center">
+                        <Tv className="w-8 h-8 text-zinc-600" />
+                      </div>
+                    )}
+                    {/* Episode Number Badge */}
+                    <div className="absolute bottom-2 left-2 bg-black/90 backdrop-blur-sm text-white/90 text-xs font-bold px-2 py-0.5 rounded-md border border-white/10 shadow-lg">
+                      {episode.episode_number}
+                    </div>
+                  </div>
 
-          {/* Episodes List */}
-          <div className="space-y-3">
-            <h3 className="text-xl font-bold">Episodes ({seasonData.episodes?.length || 0})</h3>
-            
-            {seasonData.episodes && seasonData.episodes.length > 0 ? (
-              <Accordion type="single" collapsible className="w-full space-y-2">
-                {seasonData.episodes.map((episode: TmdbEpisode) => (
-                  <AccordionItem 
-                    key={episode.id} 
-                    value={`episode-${episode.episode_number}`}
-                    className="bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 transition-colors"
-                  >
-                    <AccordionTrigger className="px-6 py-4 hover:no-underline group">
-                      <div className="flex items-start gap-4 text-left flex-1">
-                        {/* Episode Thumbnail */}
-                        {episode.still_path ? (
-                          <img
-                            src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
-                            alt={episode.name}
-                            className="w-32 h-18 object-cover rounded-lg border border-border flex-shrink-0"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-32 h-18 bg-muted rounded-lg border border-border flex items-center justify-center flex-shrink-0">
-                            <Play className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge variant="outline" className="text-xs">
-                                  Episode {episode.episode_number}
-                                </Badge>
-                                {episode.vote_average > 0 && (
-                                  <div className="flex items-center gap-1 text-xs">
-                                    <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                                    <span className="font-medium">{episode.vote_average.toFixed(1)}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <h4 className="font-semibold text-base group-hover:text-primary transition-colors line-clamp-1">
-                                {episode.name}
-                              </h4>
-                              {episode.air_date && (
-                                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {new Date(episode.air_date).toLocaleDateString('en-US', { 
-                                    month: 'short', 
-                                    day: 'numeric', 
-                                    year: 'numeric' 
-                                  })}
-                                  {episode.runtime && (
-                                    <>
-                                      <span className="mx-1">•</span>
-                                      <Clock className="w-3 h-3" />
-                                      {episode.runtime}m
-                                    </>
-                                  )}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4">
-                      <div className="pt-3 border-t border-border mt-2">
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {episode.overview || 'No episode description available.'}
-                        </p>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            ) : (
-              <div className="text-center py-12 bg-card border border-border rounded-xl">
-                <p className="text-muted-foreground">No episodes information available</p>
-              </div>
-            )}
-          </div>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <h4 className="text-lg md:text-xl font-bold text-gray-200 group-hover:text-white transition-colors truncate">
+                      {episode.name}
+                    </h4>
+                    {episode.runtime > 0 && (
+                      <p className="text-xs text-gray-500 mt-1 font-medium tracking-wide">
+                        {episode.runtime} min
+                      </p>
+                    )}
+                    <p className="text-sm md:text-base text-gray-400 mt-2.5 line-clamp-2 leading-relaxed">
+                      {episode.overview || 'No episode description available.'}
+                    </p>
+                  </div>
+
+                  <button className="shrink-0 p-3 text-gray-500 hover:text-white hover:bg-white/10 rounded-full transition-all md:mr-4 opacity-0 group-hover:opacity-100 hidden sm:flex active:scale-95">
+                    <PlayCircle className="w-6 h-6" />
+                  </button>
+                </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-[90vw] w-[1200px] h-[80vh] p-0 bg-black border-zinc-800">
+                <iframe 
+                  src={`https://www.vidking.net/embed/tv/${tvId}/${selectedSeason}/${episode.episode_number}?color=9146ff&autoPlay=true&nextEpisode=true&episodeSelector=true`}
+                  width="100%" 
+                  height="100%" 
+                  frameBorder="0" 
+                  allowFullScreen
+                  className="w-full h-full rounded-md"
+                />
+              </DialogContent>
+            </Dialog>
+          ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-card border border-border rounded-xl">
-          <p className="text-muted-foreground">Failed to load season data</p>
+        <div className="text-center py-16 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
+          <p className="text-gray-400 text-lg">No episodes found matching "{searchQuery}"</p>
         </div>
       )}
     </div>

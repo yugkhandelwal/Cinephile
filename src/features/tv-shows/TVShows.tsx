@@ -72,49 +72,37 @@ const TVShows = () => {
       <Navbar />
       
       <div className="pt-24">
-        <div className="container mx-auto px-4 py-12">
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Explore <span className="text-primary">TV Shows</span>
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Dive into captivating series and binge-worthy content
-            </p>
-          </div>
-        </div>
-
-        <div className="sticky top-16 z-20 bg-background/80 backdrop-blur py-3 border-b border-border">
-          <div className="container mx-auto px-4 flex flex-wrap gap-3 items-center">
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="h-9 rounded-md border border-border bg-background px-2 text-sm">
-            <option value="popularity.desc">Most Popular</option>
-            <option value="vote_average.desc">Top Rated</option>
-            <option value="first_air_date.desc">Newest</option>
-          </select>
-          <div className="flex gap-2 flex-wrap">
-            {tvGenres?.map((g) => (
-              <button
-                key={g.id}
-                onClick={() => setSelectedGenres((cur) => cur.includes(g.id) ? cur.filter((id) => id !== g.id) : [...cur, g.id])}
-                className={`text-xs px-3 py-1 rounded-full border ${selectedGenres.includes(g.id) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+        {/* Modern Filter Header */}
+        <div className="bg-transparent pt-8 pb-6">
+          <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h1 className="text-3xl md:text-4xl font-heading font-bold text-white tracking-tight">TV Shows</h1>
+            
+            <div className="flex items-center gap-3">
+              {/* Genres Dropdown */}
+              <select 
+                value={selectedGenres.length > 0 ? selectedGenres[0] : ''}
+                onChange={(e) => setSelectedGenres(e.target.value ? [Number(e.target.value)] : [])}
+                className="appearance-none bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium rounded-xl px-4 py-2 pr-10 outline-none focus:border-primary/50 transition-colors cursor-pointer"
+                style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.8rem top 50%', backgroundSize: '0.65rem auto' }}
               >
-                {g.name}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">Min rating</label>
-            <input type="number" min={0} max={10} step={0.5} value={ratingMin || ''} onChange={(e) => setRatingMin(Number(e.target.value) || 0)} className="h-8 w-20 rounded border border-border bg-background px-2 text-xs" />
-            <label className="text-xs text-muted-foreground">Year</label>
-            <input placeholder="From" type="number" value={yearStart || ''} onChange={(e) => setYearStart(e.target.value ? Number(e.target.value) : undefined)} className="h-8 w-20 rounded border border-border bg-background px-2 text-xs" />
-            <span className="text-xs">–</span>
-            <input placeholder="To" type="number" value={yearEnd || ''} onChange={(e) => setYearEnd(e.target.value ? Number(e.target.value) : undefined)} className="h-8 w-20 rounded border border-border bg-background px-2 text-xs" />
-          </div>
-          <button
-            onClick={() => { setSelectedGenres([]); setSortBy('popularity.desc'); setRatingMin(0); setYearStart(undefined); setYearEnd(undefined); }}
-            className="ml-auto text-xs px-3 py-1 rounded-full border border-border"
-          >
-            Clear filters
-          </button>
+                <option value="" className="bg-zinc-900">All Genres</option>
+                {tvGenres?.map((g) => (
+                  <option key={g.id} value={g.id} className="bg-zinc-900">{g.name}</option>
+                ))}
+              </select>
+
+              {/* Sort Dropdown */}
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)} 
+                className="appearance-none bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium rounded-xl px-4 py-2 pr-10 outline-none focus:border-primary/50 transition-colors cursor-pointer"
+                style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.8rem top 50%', backgroundSize: '0.65rem auto' }}
+              >
+                <option value="popularity.desc" className="bg-zinc-900">Most Popular</option>
+                <option value="vote_average.desc" className="bg-zinc-900">Top Rated</option>
+                <option value="first_air_date.desc" className="bg-zinc-900">Newest</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -130,8 +118,6 @@ const TVShows = () => {
         )}
 
         <InfiniteGrid
-          title="Filtered Results"
-          subtitle="Based on your filters"
           pages={discoverInf.data?.pages.map((p) => p.items)}
           renderItem={(m) => <MovieCard key={`${m.mediaType}-${m.id}`} {...m} />}
           isLoading={discoverInf.isLoading}

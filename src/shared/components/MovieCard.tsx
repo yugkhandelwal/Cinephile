@@ -128,71 +128,74 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
       tabIndex={0}
       role="article"
       aria-label={`${title} (${year}), rated ${rating}`}
-      className="group relative overflow-hidden rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 cursor-pointer"
+      className="group relative w-full flex flex-col cursor-pointer"
     >
-      <div className="relative aspect-[2/3] overflow-hidden bg-muted">
+      {/* Poster Image */}
+      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10 group-hover:border-white/30 transition-all duration-300 shadow-lg group-hover:shadow-2xl">
         <img 
           {...imageProps}
-          src={imageUrl} // Fallback to original if not TMDb image
+          src={imageUrl}
           alt={`${title} poster`}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {tag && (
-          <div className="absolute top-3 left-3 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold">
-            {tag}
+        {/* Hover Overlay */}
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          {/* Play Icon */}
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white transform scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl border border-white/30">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </div>
-        )}
-        
-        <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-full">
-          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-          <span className="text-sm font-semibold">{rating}</span>
-        </div>
-      </div>
-      
-      <div className="p-4">
-        <h3 className="font-semibold text-foreground mb-1 line-clamp-1 group-hover:text-primary transition-colors">
-          {title}
-        </h3>
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">{year}</p>
-          <div className="flex items-center gap-2">
+          
+          {/* Action Buttons (Top Right) */}
+          <div className="absolute top-3 right-3 flex flex-col gap-2 transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 delay-100">
             <button 
               onClick={onLike} 
               onKeyDown={(e) => handleKeyDown(e, onLike)}
               disabled={!user || liking || liked} 
-              className="text-muted-foreground hover:text-destructive transition-all disabled:opacity-50 disabled:cursor-not-allowed relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
-              aria-label={liking ? "Liking..." : liked ? "Liked" : "Like"}
+              className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white hover:bg-red-500 transition-colors disabled:opacity-50 border border-white/20"
               title={!user ? "Sign in to like" : liking ? "Liking..." : liked ? "Liked!" : "Like"}
-              tabIndex={0}
             >
-              {liking ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : liked ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <Heart className="w-4 h-4" />
-              )}
+              {liking ? <Loader2 className="w-4 h-4 animate-spin" /> : liked ? <Check className="w-4 h-4" /> : <Heart className="w-4 h-4" />}
             </button>
             <button 
               onClick={onAddWatchlist} 
               onKeyDown={(e) => handleKeyDown(e, onAddWatchlist)}
               disabled={!user || saving || saved} 
-              className="text-muted-foreground hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
-              aria-label={saving ? "Adding to watchlist..." : saved ? "Added to watchlist" : "Add to Watchlist"}
+              className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition-colors disabled:opacity-50 border border-white/20"
               title={!user ? "Sign in to add to watchlist" : saving ? "Adding..." : saved ? "Added!" : "Add to Watchlist"}
-              tabIndex={0}
             >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : saved ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <BookmarkPlus className="w-4 h-4" />
-              )}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <BookmarkPlus className="w-4 h-4" />}
             </button>
           </div>
+        </div>
+        
+        {/* Top Left Ribbon Badge */}
+        {tag && (
+          <div 
+            className="absolute top-0 left-4 bg-[#d72323] text-white flex flex-col items-center justify-start pt-2.5 pb-3.5 px-2.5 z-10 shadow-lg"
+            style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%)' }}
+          >
+            {tag.split(' ').map((line, i) => (
+              <span key={i} className="text-[11px] font-black leading-none uppercase tracking-wider">{line}</span>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Metadata */}
+      <div className="pt-3 flex flex-col gap-1.5 px-1">
+        <h3 className="font-sans font-normal text-white text-base md:text-lg line-clamp-1 group-hover:text-primary transition-colors tracking-tight">
+          {title}
+        </h3>
+        <div className="flex items-center gap-2 text-[13px] text-gray-400 font-medium">
+          <div className="flex items-center gap-1.5 text-red-500">
+            <Star className="w-4 h-4 fill-current" />
+            <span className="text-gray-300">{rating?.toFixed(1) || rating || 'N/A'}</span>
+          </div>
+          <span className="text-gray-600 font-bold">·</span>
+          <span>{year || 'N/A'}</span>
+          <span className="text-gray-600 font-bold">·</span>
+          <span className="capitalize">{mediaType === 'tv' ? 'TV Series' : 'Movie'}</span>
         </div>
       </div>
     </div>
