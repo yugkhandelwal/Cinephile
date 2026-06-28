@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Film, Search, X, User, LogOut, Settings, Heart, BookmarkPlus, ChevronDown } from "lucide-react";
+import { Film, Search, X, User, LogOut, Settings, Heart, BookmarkPlus, ChevronDown, Menu } from "lucide-react";
 
 import { useAuth } from "@/context/AuthProvider";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -37,6 +37,7 @@ const Navbar = () => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [focusedMenuIndex, setFocusedMenuIndex] = useState(0);
   const [searchFilter, setSearchFilter] = useState<SearchFilter>('multi');
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -133,9 +134,9 @@ const Navbar = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Animated Search Button/Bar */}
-            <div className="hidden md:block relative">
+            <div className="relative">
               {/* Search Button (collapsed state) */}
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/10 rounded-full opacity-0 group-hover:opacity-100 blur transition-all duration-300" />
@@ -355,7 +356,7 @@ const Navbar = () => {
               // Login Button (when not logged in)
               <Button 
                 onClick={() => navigate("/auth")} 
-                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground rounded-full px-6 py-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 relative overflow-hidden group"
+                className="hidden sm:flex bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground rounded-full px-6 py-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 relative overflow-hidden group"
               >
                 {/* Shimmer effect */}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -472,10 +473,55 @@ const Navbar = () => {
             
             {/* Loading State */}
             {loading && (
-              <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
+              <div className="hidden sm:block w-9 h-9 rounded-full bg-muted animate-pulse" />
+            )}
+
+            {/* Mobile Hamburger Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden relative group p-2 rounded-full hover:bg-white/10 transition-colors z-[60]"
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5 text-white" />
+              ) : (
+                <Menu className="w-5 h-5 text-white" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Drawer */}
+        <div className={`md:hidden absolute top-full left-0 right-0 mt-4 bg-black/95 backdrop-blur-3xl border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 transform origin-top shadow-2xl ${mobileMenuOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}>
+          <div className="flex flex-col p-4 gap-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`p-4 rounded-xl text-lg font-medium transition-colors ${
+                  location.pathname === link.path
+                    ? "bg-primary/20 text-primary"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            
+            {!loading && !user && (
+              <Button 
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigate("/auth");
+                }} 
+                className="mt-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-6 text-lg font-medium shadow-lg"
+              >
+                Sign In
+              </Button>
             )}
           </div>
-          </div>
+        </div>
       </nav>
     </div>
   );

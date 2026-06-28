@@ -249,7 +249,7 @@ const TitlePage = () => {
         {d && (
           <>
             {/* Cinematic Hero Section */}
-            <div className="relative w-full h-[85vh] min-h-[600px] overflow-hidden bg-black group">
+            <div className="relative w-full h-[70vh] md:h-[85vh] min-h-[500px] md:min-h-[600px] overflow-hidden bg-black group">
               {/* Back Button */}
               <button 
                 onClick={() => navigate(-1)}
@@ -296,8 +296,8 @@ const TitlePage = () => {
               <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/20 to-transparent pointer-events-none transition-opacity duration-1000 ${isInactive ? 'opacity-0' : 'opacity-100'}`} />
               
               {/* Content Overlay */}
-              <div className="relative w-full h-full flex items-end pb-16 md:pb-24">
-                <div className="pl-6 md:pl-16 lg:pl-24 pr-6 max-w-4xl">
+              <div className="relative w-full h-full flex items-end pb-8 md:pb-16 lg:pb-24">
+                <div className="pl-4 sm:pl-6 md:pl-16 lg:pl-24 pr-4 sm:pr-6 max-w-4xl">
                   
                   {/* Title Info */}
                   <div className={`flex flex-col text-white transition-all duration-1000 origin-bottom-left ${isInactive ? 'scale-75 translate-y-8' : 'scale-100'}`}>
@@ -314,7 +314,7 @@ const TitlePage = () => {
                           />
                         </div>
                       ) : (
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-heading tracking-wide drop-shadow-2xl">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 font-heading tracking-wide drop-shadow-2xl">
                           {d.title || d.name}
                         </h1>
                       );
@@ -360,11 +360,11 @@ const TitlePage = () => {
                     </div>
                     
                     {/* Action Buttons */}
-                    <div className={`flex flex-wrap items-center gap-4 transition-all duration-1000 ${isInactive ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
+                    <div className={`flex flex-wrap items-center gap-3 sm:gap-4 transition-all duration-1000 ${isInactive ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <button className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-xl">
-                            <PlayCircle className="w-6 h-6" />
+                          <button className="flex flex-1 sm:flex-none items-center justify-center gap-2 bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-xl text-sm sm:text-base whitespace-nowrap">
+                            <PlayCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                             Play Now
                           </button>
                         </DialogTrigger>
@@ -383,38 +383,38 @@ const TitlePage = () => {
                       <button
                         onClick={handleAddWatchlist}
                         disabled={!user || saving || saved}
-                        className="flex items-center gap-2 bg-white/10 backdrop-blur-md text-white border border-white/20 px-6 py-4 rounded-full font-medium hover:bg-white/20 transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="flex flex-1 sm:flex-none items-center justify-center gap-2 bg-white/10 backdrop-blur-md text-white border border-white/20 px-5 sm:px-6 py-3 sm:py-4 rounded-full font-medium hover:bg-white/20 transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base whitespace-nowrap"
                         aria-label={saving ? "Adding to watchlist..." : saved ? "Added to watchlist" : "Add to Watchlist"}
                       >
-                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <Check className="w-5 h-5" /> : <BookmarkPlus className="w-5 h-5" />}
+                        {saving ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : saved ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <BookmarkPlus className="w-4 h-4 sm:w-5 sm:h-5" />}
                         {saved ? "Added" : "Watchlist"}
                       </button>
                       
                       <button
                         onClick={handleLike}
                         disabled={!user || liking || liked}
-                        className="flex items-center justify-center w-14 h-14 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-red-500/80 hover:border-red-500 hover:text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-red-500/80 hover:border-red-500 hover:text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shrink-0"
                         aria-label={liking ? "Liking..." : liked ? "Liked" : "Like"}
                       >
-                        {liking ? <Loader2 className="w-5 h-5 animate-spin" /> : liked ? <Check className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
+                        {liking ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : liked ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Heart className="w-4 h-4 sm:w-5 sm:h-5" />}
                       </button>
                       
                       <button
                         onClick={handleShare}
                         disabled={sharing || shared}
-                        className="flex items-center justify-center w-14 h-14 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-white/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-white/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shrink-0"
                         aria-label={sharing ? "Sharing..." : shared ? "Shared" : "Share"}
                       >
-                        {sharing ? <Loader2 className="w-5 h-5 animate-spin" /> : shared ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+                        {sharing ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : shared ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                       </button>
 
                       {d.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer') && (
                         <button
                           onClick={toggleMute}
-                          className="flex items-center justify-center w-14 h-14 bg-black/40 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-black/60 transition-all hover:scale-105 active:scale-95 md:ml-4"
+                          className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-black/40 backdrop-blur-md text-white border border-white/20 rounded-full hover:bg-black/60 transition-all hover:scale-105 active:scale-95 sm:ml-2 shrink-0"
                           aria-label={isMuted ? "Unmute Trailer" : "Mute Trailer"}
                         >
-                          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                          {isMuted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                         </button>
                       )}
                     </div>
@@ -437,8 +437,8 @@ const TitlePage = () => {
               ].slice(0, 8).map((p) => ({ logo: p.logo_path, name: p.provider_name }));
               if (!flat.length) return null;
               return (
-                <div className="px-6 md:px-16 lg:px-24 max-w-5xl mt-12 mb-4">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2 font-heading text-white">
+                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl mt-8 sm:mt-12 mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2 font-heading text-white">
                     <Play className="w-6 h-6 text-white" />
                     Available on
                   </h3>
@@ -476,9 +476,9 @@ const TitlePage = () => {
               )}
 
               {/* Storyline & Details */}
-              <div className="px-6 md:px-16 lg:px-24 max-w-5xl">
-                <h2 className="text-2xl font-bold mb-4 font-heading text-white">Storyline</h2>
-                <p className="text-lg leading-relaxed text-gray-300">
+              <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 font-heading text-white">Storyline</h2>
+                <p className="text-base sm:text-lg leading-relaxed text-gray-300">
                   {d.overview || 'No overview available.'}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
@@ -512,10 +512,10 @@ const TitlePage = () => {
               {/* Top Billed Cast */}
               {d.credits?.cast?.length > 0 && (
                 <div className="w-full">
-                  <div className="px-6 md:px-16 lg:px-24 mb-4">
-                    <h2 className="text-2xl font-bold font-heading text-white">Top Cast</h2>
+                  <div className="px-4 sm:px-6 md:px-16 lg:px-24 mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold font-heading text-white">Top Cast</h2>
                   </div>
-                  <div className="flex overflow-x-auto gap-4 pl-6 md:pl-16 lg:pl-24 scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
+                  <div className="flex overflow-x-auto gap-4 pl-4 sm:pl-6 md:pl-16 lg:pl-24 scroll-pl-4 sm:scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-4 sm:pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
                     {d.credits.cast.slice(0, 18).map((c) => (
                       <div key={c.id} className="flex-none w-[120px] sm:w-[140px] snap-start group text-center cursor-pointer">
                         <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden border-2 border-transparent group-hover:border-white transition-all shadow-lg mb-3 bg-white/5">
@@ -538,8 +538,8 @@ const TitlePage = () => {
 
               {/* Official Trailer */}
               {d.videos?.results?.find((v)=> v.site === 'YouTube' && v.type === 'Trailer') && (
-                <div className="px-6 md:px-16 lg:px-24 max-w-5xl">
-                  <h2 className="text-2xl font-bold mb-6 font-heading text-white">Official Trailer</h2>
+                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-6 font-heading text-white">Official Trailer</h2>
                   <div className="aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                     <iframe
                       className="w-full h-full"
@@ -559,10 +559,10 @@ const TitlePage = () => {
               {/* You May Also Like */}
               {data.recommendations?.length > 0 && (
                 <div className="w-full">
-                  <div className="px-6 md:px-16 lg:px-24 mb-4">
-                    <h2 className="text-2xl font-bold font-heading text-white">You May Also Like</h2>
+                  <div className="px-4 sm:px-6 md:px-16 lg:px-24 mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold font-heading text-white">You May Also Like</h2>
                   </div>
-                  <div className="flex overflow-x-auto gap-4 pl-6 md:pl-16 lg:pl-24 scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
+                  <div className="flex overflow-x-auto gap-3 sm:gap-4 pl-4 sm:pl-6 md:pl-16 lg:pl-24 scroll-pl-4 sm:scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-4 sm:pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
                     {data.recommendations.slice(0, 18).map((m) => (
                       <div key={`${m.mediaType}-${m.id}`} className="flex-none w-[160px] sm:w-[200px] md:w-[240px] snap-start">
                         <MovieCard {...m} />
