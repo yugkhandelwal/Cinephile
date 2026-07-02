@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { X, MonitorPlay } from "lucide-react";
+import { X, MonitorPlay, ListVideo } from "lucide-react";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
+import { useSeason, useDetails } from "@/shared/api/tmdb/hooks";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/shared/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -62,6 +70,10 @@ const Player = () => {
     ? server.getTvUrl(id!, season, episode)
     : server.getMovieUrl(id!);
 
+  // Fetch episodes for the current season if it's a TV show
+  const { data: seasonData } = useSeason(type === "tv" ? id : undefined, type === "tv" ? Number(season) : undefined);
+  const { data: tvDetails } = useDetails(type === "tv" ? "tv" : "movie", id);
+
   return (
     <div className="fixed inset-0 bg-black flex flex-col w-full h-full z-[100] animate-fade-in">
       {/* Top Navigation Bar */}
@@ -99,6 +111,90 @@ const Player = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {type === "tv" && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <button 
+                  className="pointer-events-auto flex items-center justify-center w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full text-white transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 hover:scale-105 active:scale-95 group"
+                  title="Episodes"
+                >
+                  <ListVideo className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                </button>
+              </SheetTrigger>
+              <SheetContent 
+                side="right" 
+                className="w-full sm:max-w-md bg-black/80 backdrop-blur-3xl border-l border-white/10 p-0 flex flex-col h-full z-[200]"
+                onOpenAutoFocus={(e) => {
+                  const el = document.getElementById('active-episode');
+                  if (el) {
+                    e.preventDefault();
+                    el.focus();
+                  }
+                }}
+              >
+                <SheetHeader className="p-4 pr-12 border-b border-white/10 flex flex-row items-center justify-between space-y-0 h-16">
+                  <SheetTitle className="text-white text-xl">Episodes</SheetTitle>
+                  <Select 
+                    value={season} 
+                    onValueChange={(val) => navigate(`/play/tv/${id}?s=${val}&e=1`, { replace: true })}
+                  >
+                    <SelectTrigger className="w-[120px] h-8 bg-white/10 border-white/20 text-white focus:ring-0 focus:ring-offset-0 text-xs rounded-full">
+                      <SelectValue placeholder="Season" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[300] bg-black/90 backdrop-blur-xl border-white/10 text-white max-h-[300px] rounded-2xl">
+                      {tvDetails?.details?.seasons ? (
+                        tvDetails.details.seasons.filter((s: any) => s.season_number > 0).map((s: any) => (
+                          <SelectItem key={s.id} value={s.season_number.toString()} className="hover:bg-white/10 focus:bg-white/10 cursor-pointer rounded-full">
+                            Season {s.season_number}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value={season.toString()} className="rounded-full">
+                          Season {season}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </SheetHeader>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                  {seasonData?.episodes?.map((ep: any) => (
+                    <button
+                      key={ep.id}
+                      id={Number(episode) === ep.episode_number ? "active-episode" : undefined}
+                      onClick={() => navigate(`/play/tv/${id}?s=${season}&e=${ep.episode_number}`, { replace: true })}
+                      className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all duration-300 border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black
+                        ${Number(episode) === ep.episode_number 
+                          ? 'bg-primary/20 border-primary/50' 
+                          : 'bg-white/5 border-transparent hover:bg-white/10'}`}
+                    >
+                      <div className="w-24 aspect-video bg-white/10 rounded-lg overflow-hidden shrink-0 relative">
+                        {ep.still_path ? (
+                          <img 
+                            src={`https://image.tmdb.org/t/p/w300${ep.still_path}`} 
+                            alt={ep.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-white/30 text-xs">No Image</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 py-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${Number(episode) === ep.episode_number ? 'bg-primary text-white' : 'bg-white/20 text-white/80'}`}>
+                            E{ep.episode_number}
+                          </span>
+                          <span className="text-sm font-semibold text-white truncate">{ep.name}</span>
+                        </div>
+                        <p className="text-xs text-white/50 line-clamp-2">{ep.overview || "No description available."}</p>
+                      </div>
+                    </button>
+                  ))}
+                  {!seasonData && <div className="text-center text-white/50 py-8">Loading episodes...</div>}
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
         </div>
       </div>
 

@@ -42,6 +42,27 @@ export function useTrendingTV(page = 1) {
   });
 }
 
+export function useNowPlayingMovies(page = 1) {
+  return useQuery({
+    queryKey: ["tmdb", "movies", "nowPlaying", page],
+    queryFn: async () => map((await tmdb.movies.nowPlaying(page)).results),
+  });
+}
+
+export function useUpcomingMovies(page = 1) {
+  return useQuery({
+    queryKey: ["tmdb", "movies", "upcoming", page],
+    queryFn: async () => map((await tmdb.movies.upcoming(page)).results),
+  });
+}
+
+export function useOnTheAirTV(page = 1) {
+  return useQuery({
+    queryKey: ["tmdb", "tv", "onTheAir", page],
+    queryFn: async () => map((await tmdb.tv.onTheAir(page)).results),
+  });
+}
+
 export function useSearchMulti(query: string, page = 1) {
   return useQuery({
     enabled: !!query,

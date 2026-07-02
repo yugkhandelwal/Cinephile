@@ -197,6 +197,8 @@ export const tmdb = {
   movies: {
     popular: (page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/movie/popular", { page }),
     trending: (page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/trending/movie/week", { page }),
+    nowPlaying: (page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/movie/now_playing", { page }),
+    upcoming: (page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/movie/upcoming", { page }),
     search: (query: string, page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/search/movie", { query, page, include_adult: 0 }),
     details: (id: number) => tmdbFetch<TmdbMovie>(`/movie/${id}`),
     detailsWithExtras: (id: number) =>
@@ -210,6 +212,7 @@ export const tmdb = {
   tv: {
     popular: (page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/tv/popular", { page }),
     trending: (page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/trending/tv/week", { page }),
+    onTheAir: (page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/tv/on_the_air", { page }),
     search: (query: string, page = 1) => tmdbFetch<TmdbResponse<TmdbMovie>>("/search/tv", { query, page, include_adult: 0 }),
     details: (id: number) => tmdbFetch<TmdbMovie>(`/tv/${id}`),
     detailsWithExtras: (id: number) =>

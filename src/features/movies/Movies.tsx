@@ -51,15 +51,6 @@ const Movies = () => {
     setParams(next, { replace: true });
   }, [selectedGenres, sortBy]);
 
-  const actionMovies = [
-    { title: "Monster: The Ed Gein Story", year: "2025", rating: 7.5, imageUrl: "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=400&h=600&fit=crop" },
-    { title: "Freakin' Friday", year: "2025", rating: 8.3, imageUrl: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=600&fit=crop" },
-    { title: "One Battle After Another", year: "2025", rating: 8.0, imageUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=600&fit=crop" },
-    { title: "TRON: Ares", year: "2025", rating: 7.9, imageUrl: "https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400&h=600&fit=crop" },
-    { title: "The Conjuring: Last Rites", year: "2025", rating: 8.1, imageUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=600&fit=crop" },
-    { title: "HIM", year: "2025", rating: 6.0, imageUrl: "https://images.unsplash.com/photo-1594908900066-3f47337549d8?w=400&h=600&fit=crop" },
-  ];
-
   return (
   <>
     <SEO 
@@ -131,15 +122,6 @@ const Movies = () => {
             onRetry={() => trendingInf.refetch()}
           />
 
-          <ContentSection
-            title="Action & Adventure"
-            subtitle="High Octane"
-            onViewAll={() => {}}
-          >
-            {actionMovies.map((movie, index) => (
-              <MovieCard key={index} {...movie} />
-            ))}
-          </ContentSection>
         </div>
       </div>
 

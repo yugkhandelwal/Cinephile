@@ -3,7 +3,7 @@ import Hero from "./Hero";
 import ContentSection from "./ContentSection";
 import MovieCard from "@/shared/components/MovieCard";
 import Footer from "@/shared/components/layout/Footer";
-import { useTrendingMovies, useTrendingTV } from "@/shared/api/tmdb/hooks";
+import { useTrendingMovies, useTrendingTV, useNowPlayingMovies, useUpcomingMovies } from "@/shared/api/tmdb/hooks";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { useWatchHistory } from "@/shared/hooks/useWatchHistory";
 import { useMemo } from "react";
@@ -19,6 +19,9 @@ const Index = () => {
 
   const { data: trendingMovies, isLoading: moviesLoading, isError: moviesError, error: moviesErr } = useTrendingMovies();
   const { data: trendingSeries, isLoading: tvLoading, isError: tvError, error: tvErr } = useTrendingTV();
+  
+  const { data: nowPlayingMovies, isLoading: nowPlayingLoading } = useNowPlayingMovies();
+  const { data: upcomingMovies, isLoading: upcomingLoading } = useUpcomingMovies();
 
   const top10Today = useMemo(() => {
     if (!trendingMovies || !trendingSeries) return [];
@@ -37,21 +40,19 @@ const Index = () => {
     return mixed;
   }, [trendingMovies, trendingSeries]);
 
-  // Combine and shuffle trending movies and TV shows for "What's Hot Right Now"
+  // Combine trending movies and TV shows for "What's Hot Right Now" — deterministic sort by popularity
   const hotContent = useMemo(() => {
     if (!trendingMovies || !trendingSeries) return [];
     
-    // Take top items from both lists
-    const combinedContent = [
+    const combined = [
       ...trendingMovies.slice(0, 10),
       ...trendingSeries.slice(0, 10)
     ];
     
-    // Shuffle the array for variety
-    const shuffled = [...combinedContent].sort(() => Math.random() - 0.5);
-    
-    // Return top 12 items
-    return shuffled.slice(0, 12);
+    // Deterministic sort by popularity — no random shuffling
+    return combined
+      .sort((a, b) => ((b as any).popularity || 0) - ((a as any).popularity || 0))
+      .slice(0, 12);
   }, [trendingMovies, trendingSeries]);
 
   const isHotLoading = moviesLoading || tvLoading;
@@ -170,10 +171,39 @@ const Index = () => {
         ) : null}
       </SectionErrorBoundary>
 
+      {/* New Releases Section */}
+      <SectionErrorBoundary>
+        {nowPlayingLoading ? (
+          <ContentSection title="New Releases" subtitle="In theaters and streaming now">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="w-full">
+                <Skeleton className="w-full aspect-[2/3] rounded-xl" />
+              </div>
+            ))}
+          </ContentSection>
+        ) : nowPlayingMovies && nowPlayingMovies.length > 0 ? (
+          <ContentSection title="New Releases" subtitle="In theaters and streaming now">
+            {nowPlayingMovies.map((movie) => (
+              <MovieCard key={`nowplaying-${movie.mediaType}-${movie.id}`} {...movie} tag="NEW" />
+            ))}
+          </ContentSection>
+        ) : null}
+      </SectionErrorBoundary>
+
+
       {/* Trending Movies Section */}
       <SectionErrorBoundary>
         {moviesLoading && (
-          <div className="container mx-auto px-4 py-12 text-muted-foreground">Loading trending movies…</div>
+          <ContentSection
+            title="Trending Movies"
+            subtitle="Cinema Collection"
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="w-full">
+                <Skeleton className="w-full aspect-[2/3] rounded-xl" />
+              </div>
+            ))}
+          </ContentSection>
         )}
         {moviesError && !isHotLoading && (
           <div className="container mx-auto px-4 py-12 text-destructive">{String((moviesErr as Error)?.message || 'Failed to load')}</div>
@@ -194,7 +224,16 @@ const Index = () => {
       {/* Trending TV Series Section */}
       <SectionErrorBoundary>
         {tvLoading && (
-          <div className="container mx-auto px-4 py-12 text-muted-foreground">Loading trending TV…</div>
+          <ContentSection
+            title="Trending TV Series"
+            subtitle="Streaming Universe"
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="w-full">
+                <Skeleton className="w-full aspect-[2/3] rounded-xl" />
+              </div>
+            ))}
+          </ContentSection>
         )}
         {tvError && !isHotLoading && (
           <div className="container mx-auto px-4 py-12 text-destructive">{String((tvErr as Error)?.message || 'Failed to load')}</div>

@@ -6,6 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import type { UIMediaItem } from "@/shared/api/tmdb/hooks";
+import { motion } from "framer-motion";
 
 const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
   const navigate = useNavigate();
@@ -26,13 +27,23 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
   
   const logoUrl = logoPath ? `https://image.tmdb.org/t/p/w500${logoPath}` : null;
 
+  const genres = useMemo(() => {
+    if (data?.details?.genres) return data.details.genres.slice(0, 3).map((g: any) => g.name);
+    // Fallback to featured item's description-based inference
+    return [];
+  }, [data]);
+
   return (
     <div className="relative flex-none w-full h-full flex items-center justify-start overflow-hidden">
       {/* Full Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
+        <motion.img
+          initial={{ scale: 1 }}
+          animate={{ scale: 1.1 }}
+          transition={{ duration: 12, ease: "linear" }}
           src={backdropUrl}
-          alt={featured.title}
+          alt=""
+          aria-hidden="true"
           className="w-full h-full object-cover object-top opacity-70"
         />
         {/* Heavy Gradients to match Cineby Reference (mostly left and bottom) */}
@@ -57,16 +68,18 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
           
           {/* Meta Info Row */}
           <div className="flex items-center gap-3 mb-6 text-sm font-semibold tracking-wide text-white/70">
-            <span className="flex items-center text-red-500 gap-1">
+            <span className="flex items-center text-amber-400 gap-1">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="mb-[2px]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               {featured.rating?.toFixed(1)}
             </span>
             <span className="text-white/40">•</span>
             <span>{year}</span>
-            <span className="text-white/40">•</span>
-            <span>Action</span>
-            <span className="text-white/40">•</span>
-            <span>Thriller</span>
+            {genres.length > 0 && (
+              <>
+                <span className="text-white/40">•</span>
+                <span>{genres.join(" · ")}</span>
+              </>
+            )}
           </div>
 
           <p className="text-base md:text-lg text-white/60 mb-10 line-clamp-3 md:line-clamp-4 max-w-xl font-medium leading-relaxed drop-shadow-md">
@@ -77,7 +90,7 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
             <Button 
               size="lg" 
               onClick={() => navigate(`/title/movie/${featured.id}`)}
-              className="bg-white text-black hover:bg-white/90 rounded-full px-8 h-12 gap-2 shadow-xl hover:scale-105 transition-all text-sm font-bold"
+              className="bg-white text-black hover:bg-white/90 rounded-full px-8 h-12 gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all text-sm font-bold"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Play
@@ -86,7 +99,7 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
               size="lg" 
               variant="outline"
               onClick={() => navigate(`/title/movie/${featured.id}`)}
-              className="rounded-full px-8 h-12 gap-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:border-white/30 backdrop-blur-md transition-all text-sm font-semibold"
+              className="rounded-full px-8 h-12 gap-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:border-white/30 backdrop-blur-md active:scale-95 transition-all text-sm font-semibold"
             >
               <Info className="w-5 h-5" />
               See More
@@ -120,6 +133,20 @@ const Hero = () => {
     emblaApi.on("reInit", onSelect);
   }, [emblaApi, onSelect]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!emblaApi) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        emblaApi.scrollPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        emblaApi.scrollNext();
+      }
+    },
+    [emblaApi]
+  );
+
   if (!trendingMovies || trendingMovies.length === 0) {
     return (
       <section className="relative h-screen flex items-center justify-center overflow-hidden bg-background animate-pulse">
@@ -129,7 +156,14 @@ const Hero = () => {
   }
 
   return (
-    <section className="relative h-screen w-full bg-black overflow-hidden" ref={emblaRef}>
+    <section 
+      className="relative h-screen w-full bg-black overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" 
+      ref={emblaRef}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-label="Featured content carousel"
+      aria-roledescription="carousel"
+    >
       <div className="flex h-full touch-pan-y">
         {trendingMovies.slice(0, 10).map((featured) => (
           <HeroSlide key={featured.id} featured={featured} />
@@ -141,12 +175,22 @@ const Hero = () => {
         {trendingMovies?.slice(0, 10).map((_, i) => (
           <button
             key={i}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === selectedIndex ? "bg-white/80 w-6" : "bg-white/30 hover:bg-white/50"
+            className={`relative overflow-hidden p-0 m-0 border-none outline-none appearance-none rounded-full transition-all duration-300 ${
+              i === selectedIndex ? "bg-white/60 w-6 h-1 md:w-10 md:h-1.5" : "bg-white/30 w-1.5 h-1.5 md:w-2 md:h-2 hover:bg-white/50"
             }`}
+            style={{ minWidth: 0, minHeight: 0, WebkitAppearance: 'none' }}
             onClick={() => emblaApi?.scrollTo(i)}
             aria-label={`Go to slide ${i + 1}`}
-          />
+          >
+            {i === selectedIndex && (
+              <motion.div
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 6, ease: "linear" }}
+                className="absolute inset-0 bg-white"
+              />
+            )}
+          </button>
         ))}
       </div>
     </section>

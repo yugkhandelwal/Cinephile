@@ -8,6 +8,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { getPosterImageProps, ASPECT_RATIOS, getAspectRatioPadding } from "@/shared/lib/imageOptimizer";
 import { usePrefetchDetails } from "@/shared/api/tmdb/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MovieCardProps {
   id?: number;
@@ -38,6 +39,8 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
   
   const isSaved = watchlist?.some(w => w.media_id === id) || false;
   
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
@@ -146,11 +149,21 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
         {/* Inner Glassy Border */}
         <div className="absolute inset-0 rounded-2xl border border-white/5 group-hover:border-white/20 z-20 pointer-events-none transition-colors duration-500" />
         
+        {/* Skeleton while image loads */}
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-white/5 animate-shimmer" />
+        )}
+
         <img 
           {...imageProps}
           src={imageUrl}
           alt={`${title} poster`}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          onLoad={() => setImageLoaded(true)}
+          className={`w-full h-full object-cover transition-all duration-700 ease-out ${
+            imageLoaded 
+              ? "scale-100 blur-0 group-hover:scale-105 opacity-100" 
+              : "scale-110 blur-xl opacity-0"
+          }`}
         />
         
         {/* Subtle bottom gradient to ensure overlay icons are visible */}
@@ -166,37 +179,68 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
           {/* Action Buttons (Top Right) */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 transform lg:translate-x-4 opacity-100 lg:opacity-0 lg:group-hover:translate-x-0 lg:group-hover:opacity-100 transition-all duration-500 delay-100 pointer-events-auto z-30">
             {onRemove && (
-              <button 
+              <motion.button 
+                whileTap={{ scale: 0.8 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemove();
                 }} 
-                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-destructive hover:text-white transition-all duration-300 border border-white/20 shadow-lg active:scale-95"
+                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-destructive hover:text-white transition-all duration-300 border border-white/20 shadow-lg"
                 title="Remove"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </motion.button>
             )}
-            <button 
+            <motion.button 
+              whileTap={{ scale: 0.8 }}
               onClick={onLike} 
               onKeyDown={(e) => handleKeyDown(e, onLike)}
               disabled={liking || liked} 
-              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white hover:text-black transition-all duration-300 disabled:opacity-50 border border-white/20 shadow-lg active:scale-95"
+              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white hover:text-black transition-all duration-300 disabled:opacity-50 border border-white/20 shadow-lg"
               title={liking ? "Liking..." : liked ? "Liked!" : "Like"}
             >
-              {liking ? <Loader2 className="w-4 h-4 animate-spin" /> : liked ? <Check className="w-4 h-4" /> : <Heart className="w-4 h-4" />}
-            </button>
-            <button 
+              <AnimatePresence mode="wait">
+                {liking ? (
+                  <motion.div key="loading" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.2 }}>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </motion.div>
+                ) : liked ? (
+                  <motion.div key="liked" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1.2, opacity: 1 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
+                    <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                  </motion.div>
+                ) : (
+                  <motion.div key="like" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.2 }}>
+                    <Heart className="w-4 h-4" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
+            <motion.button 
+              whileTap={{ scale: 0.8 }}
               onClick={onAddWatchlist} 
               onKeyDown={(e) => handleKeyDown(e, onAddWatchlist)}
               disabled={saving} 
-              className={`w-9 h-9 rounded-full backdrop-blur-xl flex items-center justify-center transition-all duration-300 disabled:opacity-50 border border-white/20 shadow-lg active:scale-95 ${
+              className={`w-9 h-9 rounded-full backdrop-blur-xl flex items-center justify-center transition-all duration-300 disabled:opacity-50 border border-white/20 shadow-lg ${
                 isSaved ? "bg-primary text-white hover:bg-primary/80" : "bg-black/40 text-white hover:bg-primary"
               }`}
               title={saving ? "Updating..." : isSaved ? "Remove from Watchlist" : "Add to Watchlist"}
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : isSaved ? <Check className="w-4 h-4" /> : <BookmarkPlus className="w-4 h-4" />}
-            </button>
+              <AnimatePresence mode="wait">
+                {saving ? (
+                  <motion.div key="loading" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.2 }}>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </motion.div>
+                ) : isSaved ? (
+                  <motion.div key="saved" initial={{ scale: 0.5, rotate: -45 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
+                    <Check className="w-4 h-4" />
+                  </motion.div>
+                ) : (
+                  <motion.div key="save" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.2 }}>
+                    <BookmarkPlus className="w-4 h-4" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
         

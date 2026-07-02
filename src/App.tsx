@@ -15,15 +15,17 @@ const Title = lazy(() => import("./features/movies/Title"));
 const Player = lazy(() => import("./features/player/Player"));
 const AccountSettings = lazy(() => import("./features/account/AccountSettings"));
 import { AuthProvider } from "./context/AuthProvider";
+import { RatingsProvider } from "./context/RatingsProvider";
+import { SearchProvider } from "./context/SearchProvider";
 import Auth from "./features/auth/Auth";
 import Recommendations from "./features/movies/Recommendations";
-import { RatingsProvider } from "./context/RatingsProvider";
 import Analytics from "./shared/components/Analytics";
 import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 import { RouteErrorBoundary } from "./shared/components/RouteErrorBoundary";
 import { measureAllMetrics } from "./shared/lib/performance";
 import { OfflineIndicator } from "./shared/components/OfflineIndicator";
 import { setupPersistentCache } from "./shared/lib/persistentCache";
+import { ScrollToTop } from "./shared/components/ScrollToTop";
 
 // Configure React Query with better defaults
 const queryClient = new QueryClient({
@@ -38,6 +40,46 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const GlobalLoader = () => (
+  <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-[9999] animate-fade-in">
+    <div className="relative w-20 h-20 flex items-center justify-center mb-8">
+      <div className="absolute inset-0 border-t-2 border-primary border-solid rounded-full animate-spin" />
+      <div className="absolute inset-2 border-r-2 border-primary/60 border-solid rounded-full animate-[spin_1.5s_linear_infinite_reverse]" />
+      <div className="absolute inset-4 border-b-2 border-primary/30 border-solid rounded-full animate-spin" />
+    </div>
+    <div className="text-primary font-bold tracking-widest text-sm animate-pulse">CINEPHILE</div>
+  </div>
+);
+
+import { useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "./shared/components/PageTransition";
+
+import { PullToRefresh } from "./shared/components/PullToRefresh";
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><RouteErrorBoundary routeName="Home"><Index /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/movies" element={<PageTransition><RouteErrorBoundary routeName="Movies"><Movies /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/tv-shows" element={<PageTransition><RouteErrorBoundary routeName="TV Shows"><TVShows /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/watchlist" element={<PageTransition><RouteErrorBoundary routeName="Watchlist"><Watchlist /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/search" element={<PageTransition><RouteErrorBoundary routeName="Search"><Search /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/title/:type/:id" element={<PageTransition><RouteErrorBoundary routeName="Title"><Title /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/play/:type/:id" element={<PageTransition><RouteErrorBoundary routeName="Player"><Player /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/auth" element={<PageTransition><RouteErrorBoundary routeName="Auth"><Auth /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/recommendations" element={<PageTransition><RouteErrorBoundary routeName="Recommendations"><Recommendations /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/account" element={<PageTransition><RouteErrorBoundary routeName="Account Settings"><AccountSettings /></RouteErrorBoundary></PageTransition>} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<PageTransition><RouteErrorBoundary routeName="Not Found"><NotFound /></RouteErrorBoundary></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
 
 const App = () => {
   // Initialize performance monitoring and persistent cache on mount
@@ -70,23 +112,13 @@ const App = () => {
                   console.error('App Error:', error, errorInfo);
                 }}
               >
-                <Suspense fallback={<div className="pt-24 container mx-auto px-4">Loading…</div>}>
+                <ScrollToTop />
+                <Suspense fallback={<GlobalLoader />}>
                   <Analytics />
                   <OfflineIndicator />
-                  <Routes>
-                    <Route path="/" element={<RouteErrorBoundary routeName="Home"><Index /></RouteErrorBoundary>} />
-                    <Route path="/movies" element={<RouteErrorBoundary routeName="Movies"><Movies /></RouteErrorBoundary>} />
-                    <Route path="/tv-shows" element={<RouteErrorBoundary routeName="TV Shows"><TVShows /></RouteErrorBoundary>} />
-                    <Route path="/watchlist" element={<RouteErrorBoundary routeName="Watchlist"><Watchlist /></RouteErrorBoundary>} />
-                    <Route path="/search" element={<RouteErrorBoundary routeName="Search"><Search /></RouteErrorBoundary>} />
-                    <Route path="/title/:type/:id" element={<RouteErrorBoundary routeName="Title"><Title /></RouteErrorBoundary>} />
-                    <Route path="/play/:type/:id" element={<RouteErrorBoundary routeName="Player"><Player /></RouteErrorBoundary>} />
-                    <Route path="/auth" element={<RouteErrorBoundary routeName="Auth"><Auth /></RouteErrorBoundary>} />
-                    <Route path="/recommendations" element={<RouteErrorBoundary routeName="Recommendations"><Recommendations /></RouteErrorBoundary>} />
-                    <Route path="/account" element={<RouteErrorBoundary routeName="Account Settings"><AccountSettings /></RouteErrorBoundary>} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<RouteErrorBoundary routeName="Not Found"><NotFound /></RouteErrorBoundary>} />
-                  </Routes>
+                  <PullToRefresh>
+                    <AnimatedRoutes />
+                  </PullToRefresh>
                 </Suspense>
               </ErrorBoundary>
             </BrowserRouter>

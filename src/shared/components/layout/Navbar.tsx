@@ -108,6 +108,40 @@ const Navbar = () => {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+
+  // Focus trap for search modal
+  useEffect(() => {
+    if (!searchExpanded) return;
+    const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const modal = document.getElementById('search-modal');
+    if (!modal) return;
+    
+    const focusableContent = modal.querySelectorAll(focusableElements);
+    if (focusableContent.length === 0) return;
+    
+    const firstFocusableElement = focusableContent[0] as HTMLElement;
+    const lastFocusableElement = focusableContent[focusableContent.length - 1] as HTMLElement;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isTabPressed = e.key === 'Tab' || e.keyCode === 9;
+      if (!isTabPressed) return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstFocusableElement) {
+          lastFocusableElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastFocusableElement) {
+          firstFocusableElement.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [searchExpanded, suggestions, open, recentSearches]);
   
   const navLinks = [
     { name: "Home", path: "/", icon: Home },
@@ -194,9 +228,9 @@ const Navbar = () => {
                   </Button>
                 </div>
 
-                {/* Search Modal Overlay */}
                 {searchExpanded && createPortal(
                   <div 
+                    id="search-modal"
                     className="fixed inset-0 z-[100] flex justify-center items-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
                     onClick={() => {
                       setSearchExpanded(false);
@@ -309,7 +343,10 @@ const Navbar = () => {
                       </div>
 
                       {/* Suggestions / Recent Dropdown container */}
-                      <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl overflow-hidden mt-1 flex flex-col min-h-[100px]">
+                      <div 
+                        className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl overflow-hidden mt-1 flex flex-col min-h-[100px]"
+                        aria-live="polite"
+                      >
                         {open && suggestions.length > 0 ? (
                           <div className="max-h-[50vh] overflow-y-auto py-2">
                             {suggestions.map((s, idx) => (
@@ -530,7 +567,7 @@ const Navbar = () => {
                     <span className="absolute -bottom-2 w-1 h-1 rounded-full bg-primary" />
                   )}
                 </div>
-                <span className={`text-[10px] font-medium transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                <span className={`text-[10px] font-medium transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>
                   {link.name}
                 </span>
               </Link>
@@ -553,7 +590,7 @@ const Navbar = () => {
                 <span className="absolute -bottom-2 w-1 h-1 rounded-full bg-primary" />
               )}
             </div>
-            <span className={`text-[10px] font-medium transition-colors duration-300 ${location.pathname === '/account' || location.pathname === '/auth' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+            <span className={`text-[10px] font-medium transition-colors duration-300 ${location.pathname === '/account' || location.pathname === '/auth' ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>
               {user ? 'Profile' : 'Sign In'}
             </span>
           </Link>

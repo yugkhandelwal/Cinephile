@@ -1,6 +1,5 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
-import ContentSection from "../home/ContentSection";
 import MovieCard from "@/shared/components/MovieCard";
 import { useTrendingTV, useGenres, useDiscover, useInfiniteDiscover, useInfiniteTrending } from "@/shared/api/tmdb/hooks";
 import { useEffect, useRef, useState } from "react";
@@ -50,15 +49,6 @@ const TVShows = () => {
     io.observe(el);
     return () => io.disconnect();
   }, [discoverInf.hasNextPage, discoverInf.isFetchingNextPage, trendingInf.hasNextPage, trendingInf.isFetchingNextPage]);
-
-  const dramaShows = [
-    { title: "Breaking Bad", year: "2008", rating: 9.5, imageUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=600&fit=crop" },
-    { title: "The Crown", year: "2016", rating: 8.7, imageUrl: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=600&fit=crop" },
-    { title: "Succession", year: "2018", rating: 8.9, imageUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=600&fit=crop" },
-    { title: "The Last of Us", year: "2023", rating: 8.8, imageUrl: "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=400&h=600&fit=crop" },
-    { title: "Better Call Saul", year: "2015", rating: 9.0, imageUrl: "https://images.unsplash.com/photo-1594908900066-3f47337549d8?w=400&h=600&fit=crop" },
-    { title: "The Wire", year: "2002", rating: 9.3, imageUrl: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&h=600&fit=crop" },
-  ];
 
   return (
   <>
@@ -155,17 +145,6 @@ const TVShows = () => {
           </div>
         )}
 
-  <div className="h-2" />
-
-        <ContentSection
-          title="Must-Watch Dramas"
-          subtitle="Award Winners"
-          onViewAll={() => {}}
-        >
-          {dramaShows.map((show, index) => (
-            <MovieCard key={index} {...show} />
-          ))}
-        </ContentSection>
       </div>
 
       <Footer />
