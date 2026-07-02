@@ -56,5 +56,19 @@ export function useWatchHistory() {
     localStorage.removeItem(HISTORY_KEY);
   }, []);
 
-  return { history, addToHistory, clearHistory };
+  const removeFromHistory = useCallback((id: number, mediaType: "movie" | "tv") => {
+    setHistory((prev) => {
+      const newHistory = prev.filter(
+        (h) => !(h.id === id && h.mediaType === mediaType)
+      );
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
+      } catch (e) {
+        console.error("Failed to save watch history", e);
+      }
+      return newHistory;
+    });
+  }, []);
+
+  return { history, addToHistory, removeFromHistory, clearHistory };
 }

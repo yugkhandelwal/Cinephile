@@ -10,10 +10,12 @@ import { useMemo } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SectionErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { SEO } from "@/shared/components/SEO";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
   useDocumentTitle("Home");
-  const { history } = useWatchHistory();
+  const { history, removeFromHistory } = useWatchHistory();
 
   const { data: trendingMovies, isLoading: moviesLoading, isError: moviesError, error: moviesErr } = useTrendingMovies();
   const { data: trendingSeries, isLoading: tvLoading, isError: tvError, error: tvErr } = useTrendingTV();
@@ -63,7 +65,7 @@ const Index = () => {
       keywords={['movies', 'tv shows', 'trending', 'watchlist', 'tmdb', 'cinema']}
       url="https://cinephile.app"
     />
-    <div id="main" className="min-h-screen bg-background">
+    <div id="main" className="min-h-screen bg-background animate-fade-in">
       <Navbar />
       <Hero />
 
@@ -86,11 +88,22 @@ const Index = () => {
             subtitle="The most popular movies and TV series right now"
           >
             {top10Today.map((item, index) => (
-              <MovieCard 
-                key={`top10-${item.mediaType}-${item.id}`} 
-                {...item}
-                tag={`TOP ${String(index + 1).padStart(2, '0')}`}
-              />
+              <div key={`top10-${item.mediaType}-${item.id}`} className="relative w-full h-full flex items-end justify-end pt-8 pr-2">
+                <span 
+                  className="absolute left-[-5%] sm:-left-2 bottom-4 sm:bottom-6 text-[100px] sm:text-[130px] md:text-[160px] lg:text-[180px] font-black leading-none text-background z-0 select-none tracking-tighter drop-shadow-2xl"
+                  style={{
+                    WebkitTextStroke: "3px rgba(255,255,255,0.7)",
+                    textShadow: "4px 0 10px rgba(0,0,0,0.5)"
+                  }}
+                >
+                  {index + 1}
+                </span>
+                <div className="relative z-10 w-[65%] sm:w-[70%] md:w-[75%] ml-auto shadow-[[-10px_0_20px_rgba(0,0,0,0.5)]]">
+                  <MovieCard 
+                    {...item}
+                  />
+                </div>
+              </div>
             ))}
           </ContentSection>
         ) : null}
@@ -112,6 +125,7 @@ const Index = () => {
                 imageUrl={item.imageUrl || ''}
                 rating={item.rating || 0}
                 year={item.year}
+                onRemove={() => removeFromHistory(item.id, item.mediaType)}
               />
             ))}
           </ContentSection>
@@ -168,7 +182,7 @@ const Index = () => {
           <ContentSection
           title="Trending Movies"
           subtitle="Cinema Collection"
-          onViewAll={() => {}}
+          onViewAll={() => navigate("/movies")}
         >
           {trendingMovies.map((movie) => (
             <MovieCard key={`${movie.mediaType}-${movie.id}`} {...movie} />
@@ -189,7 +203,7 @@ const Index = () => {
           <ContentSection
           title="Trending TV Series"
           subtitle="Streaming Universe"
-          onViewAll={() => {}}
+          onViewAll={() => navigate("/tv-shows")}
         >
           {trendingSeries.map((show) => (
             <MovieCard key={`${show.mediaType}-${show.id}`} {...show} />

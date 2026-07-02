@@ -12,6 +12,7 @@ const Watchlist = lazy(() => import("./features/watchlist/Watchlist"));
 const NotFound = lazy(() => import("./shared/components/NotFound"));
 const Search = lazy(() => import("./features/search/Search"));
 const Title = lazy(() => import("./features/movies/Title"));
+const Player = lazy(() => import("./features/player/Player"));
 const AccountSettings = lazy(() => import("./features/account/AccountSettings"));
 import { AuthProvider } from "./context/AuthProvider";
 import Auth from "./features/auth/Auth";
@@ -79,6 +80,7 @@ const App = () => {
                     <Route path="/watchlist" element={<RouteErrorBoundary routeName="Watchlist"><Watchlist /></RouteErrorBoundary>} />
                     <Route path="/search" element={<RouteErrorBoundary routeName="Search"><Search /></RouteErrorBoundary>} />
                     <Route path="/title/:type/:id" element={<RouteErrorBoundary routeName="Title"><Title /></RouteErrorBoundary>} />
+                    <Route path="/play/:type/:id" element={<RouteErrorBoundary routeName="Player"><Player /></RouteErrorBoundary>} />
                     <Route path="/auth" element={<RouteErrorBoundary routeName="Auth"><Auth /></RouteErrorBoundary>} />
                     <Route path="/recommendations" element={<RouteErrorBoundary routeName="Recommendations"><Recommendations /></RouteErrorBoundary>} />
                     <Route path="/account" element={<RouteErrorBoundary routeName="Account Settings"><AccountSettings /></RouteErrorBoundary>} />
