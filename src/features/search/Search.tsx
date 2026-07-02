@@ -63,17 +63,33 @@ const Search = () => {
       <Navbar />
       <div className="pt-24 container mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">
-            Search results for <span className="text-primary">{sanitizedQuery || "…"}</span>
+          <h1 className="text-4xl md:text-5xl font-heading font-bold mb-3 tracking-wide drop-shadow-sm text-white">
+            Search results {sanitizedQuery ? <span>for <span className="text-primary">{sanitizedQuery}</span></span> : ""}
           </h1>
-          {!sanitizedQuery && <p className="text-muted-foreground">Type a query in the search bar to begin.</p>}
+          
+          {!sanitizedQuery && (
+            <div className="flex flex-col items-center justify-center py-32 px-4 animate-fade-in">
+              <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-[40px] pointer-events-none" />
+                <div className="relative w-24 h-24 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-center shadow-2xl -rotate-12 hover:rotate-0 transition-transform duration-500 ease-out backdrop-blur-xl">
+                  <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-3xl font-heading font-bold text-white mb-4 tracking-wide text-center">Discover something new</h3>
+              <p className="text-gray-400 text-center max-w-md mb-10 text-lg leading-relaxed">
+                Click the search icon in the top navigation bar to explore our extensive library of movies and TV shows.
+              </p>
+            </div>
+          )}
           
           {/* Show validation error if query is invalid */}
           {validationError && rawQuery && (
-            <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="mt-6 p-5 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-start gap-4 shadow-lg backdrop-blur-sm">
+              <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-destructive">Invalid Search Query</p>
+                <p className="text-base font-bold text-destructive">Invalid Search Query</p>
                 <p className="text-sm text-destructive/90 mt-1">{validationError}</p>
               </div>
             </div>
