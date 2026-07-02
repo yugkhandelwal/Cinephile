@@ -6,6 +6,7 @@ import { signInSchema, signUpSchema } from "@/shared/lib/validation";
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Mail, Lock, Sparkles, TrendingUp } from "lucide-react";
 import { z } from "zod";
 import { useTrendingMovies } from "@/shared/api/tmdb/hooks";
+import { motion } from "framer-motion";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -174,16 +175,47 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col animate-fade-in">
-      <Navbar />
+    <div className="min-h-screen bg-background flex flex-col animate-fade-in relative">
+      {/* Poster Wall Background */}
+      {trendingMovies && trendingMovies.length > 0 && (
+        <div className="absolute inset-0 z-0 overflow-hidden select-none pointer-events-none flex flex-col justify-center gap-6 rotate-[-6deg] scale-125 origin-center">
+          <motion.div 
+            className="flex gap-6 w-max"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ repeat: Infinity, ease: "linear", duration: 80 }}
+          >
+            {[...trendingMovies, ...trendingMovies].map((movie, i) => (
+              <div key={`row1-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </motion.div>
+          <motion.div 
+            className="flex gap-6 w-max -ml-[50%]"
+            animate={{ x: ["0%", "50%"] }}
+            transition={{ repeat: Infinity, ease: "linear", duration: 70 }}
+          >
+            {[...trendingMovies, ...trendingMovies].map((movie, i) => (
+              <div key={`row2-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      )}
       
-      {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-24 relative overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-0 pointer-events-none" />
+      
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Navbar />
         
-        <div className="w-full max-w-md mx-auto relative z-10">
-          <div className="bg-black/20 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-8 sm:p-10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+        {/* Main Content */}
+        <div className="flex-1 flex items-center justify-center px-4 py-24 relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none z-0" />
+          
+          <div className="w-full max-w-md mx-auto relative z-10">
+            <div className="bg-black/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-8 sm:p-10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
               
               {/* Tab Switcher */}
               <div className="flex gap-2 p-1.5 bg-white/5 backdrop-blur-md rounded-xl mb-8 border border-white/5">
@@ -256,7 +288,7 @@ const Auth = () => {
                       autoComplete="email"
                       className={`w-full h-12 rounded-xl border ${
                         validationErrors.email ? 'border-red-500/50 focus:ring-red-500/50' : 'border-white/10 focus:border-white/30 focus:ring-primary/50'
-                      } bg-white/5 hover:bg-white/10 pl-11 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:bg-white/10 transition-all shadow-inner`}
+                      } bg-white/5 hover:bg-white/10 pl-11 pr-4 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:bg-white/10 transition-all shadow-inner`}
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => {
@@ -289,7 +321,7 @@ const Auth = () => {
                       autoComplete="current-password"
                       className={`w-full h-12 rounded-xl border ${
                         validationErrors.password ? 'border-red-500/50 focus:ring-red-500/50' : 'border-white/10 focus:border-white/30 focus:ring-primary/50'
-                      } bg-white/5 hover:bg-white/10 pl-11 pr-11 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:bg-white/10 transition-all shadow-inner`}
+                      } bg-white/5 hover:bg-white/10 pl-11 pr-11 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:bg-white/10 transition-all shadow-inner`}
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => {
@@ -320,7 +352,7 @@ const Auth = () => {
                     </p>
                   )}
                   {isSignUp && (
-                    <p className="text-xs text-gray-500 mt-2.5 font-medium leading-relaxed">
+                    <p className="text-xs text-gray-400 mt-2.5 font-medium leading-relaxed">
                       Must include uppercase, lowercase, number, and special character (min. 8 chars)
                     </p>
                   )}
@@ -343,7 +375,7 @@ const Auth = () => {
                     <div className="w-full border-t border-white/10" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase font-bold tracking-widest">
-                    <span className="bg-[#151515] px-4 text-gray-500 rounded-full">Or continue with</span>
+                    <span className="bg-[#151515] px-4 text-gray-400 rounded-full">Or continue with</span>
                   </div>
                 </div>
 
@@ -376,7 +408,7 @@ const Auth = () => {
               </div>
 
               <div className="mt-8 pt-6 border-t border-white/10">
-                <p className="text-xs text-gray-500 font-medium text-center">
+                <p className="text-xs text-gray-400 font-medium text-center">
                   By continuing, you agree to Cinephile's{' '}
                   <a href="#" className="text-gray-300 hover:text-white hover:underline transition-colors">Terms of Service</a>
                   {' '}and{' '}
@@ -388,6 +420,7 @@ const Auth = () => {
         </div>
       
       <Footer />
+      </div>
     </div>
   );
 };

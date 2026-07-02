@@ -20,6 +20,7 @@ import { TmdbSeason, TmdbEpisode } from "@/shared/api/tmdb/types";
 import ReactPlayer from "react-player";
 import { useWatchHistory } from "@/shared/hooks/useWatchHistory";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useVibrant } from "@/shared/hooks/useVibrant";
 
 const getDirectProviderLink = (providerName: string, title: string, fallbackLink: string = '#') => {
   if (!title) return fallbackLink;
@@ -142,6 +143,7 @@ const TitlePage = () => {
   }, []);
 
   const d = data?.details;
+  const { colors: vibrantColors } = useVibrant(d?.poster_path ? toPoster(d.poster_path) : null);
   useDocumentTitle(d?.title || d?.name ? `${d?.title || d?.name}` : "Title");
 
   const { addToHistory } = useWatchHistory();
@@ -254,6 +256,10 @@ const TitlePage = () => {
     }
   };
 
+  const [activeTab, setActiveTab] = useState<"overview" | "episodes" | "cast" | "media" | "similar">(
+    kind === "tv" ? "episodes" : "overview"
+  );
+
   return (
     <div id="main" className="min-h-screen bg-background animate-fade-in">
       <div className="w-full">
@@ -296,6 +302,13 @@ const TitlePage = () => {
                         backgroundImage: `url(${d.backdrop_path ? `https://image.tmdb.org/t/p/original${d.backdrop_path}` : '/placeholder.svg'})` 
                       }}
                     />
+
+                    {/* Dynamic Color Overlay from Poster */}
+                    <div 
+                      className="absolute inset-0 transition-colors duration-1000 pointer-events-none mix-blend-multiply opacity-60 z-10"
+                      style={{ backgroundColor: vibrantColors?.DarkVibrant || 'transparent' }}
+                    />
+                    
                     
                     {/* Render trailer on top, fading in once loaded */}
                     {trailer && (
@@ -341,7 +354,10 @@ const TitlePage = () => {
                           />
                         </div>
                       ) : (
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 font-heading tracking-wide drop-shadow-2xl text-white">
+                        <h1 
+                          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 font-heading tracking-wide drop-shadow-2xl text-white transition-all duration-1000"
+                          style={{ textShadow: vibrantColors?.Vibrant ? `0 4px 40px ${vibrantColors.Vibrant}80` : undefined }}
+                        >
                           {d.title || d.name}
                         </h1>
                       );
@@ -364,14 +380,14 @@ const TitlePage = () => {
                       
                       {d.runtime > 0 && (
                         <div className="flex items-center gap-1.5 text-gray-200">
-                          <span className="text-gray-500 font-bold">·</span>
+                          <span className="text-gray-400 font-bold">·</span>
                           <span>{Math.floor(d.runtime / 60)}h {d.runtime % 60}m</span>
                         </div>
                       )}
                       
                       {d.number_of_seasons > 0 && (
                         <div className="flex items-center gap-1.5 text-gray-200">
-                          <span className="text-gray-500 font-bold">·</span>
+                          <span className="text-gray-400 font-bold">·</span>
                           <span>{d.number_of_seasons} Season{d.number_of_seasons > 1 ? 's' : ''}</span>
                         </div>
                       )}
@@ -393,6 +409,7 @@ const TitlePage = () => {
                       <button 
                         onClick={() => navigate(`/play/${kind}/${id}${kind === 'tv' ? '?s=1&e=1' : ''}`)}
                         className="flex flex-1 sm:flex-none items-center justify-center gap-2 bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold hover:bg-gray-200 transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)] text-sm sm:text-base whitespace-nowrap"
+                        style={{ boxShadow: vibrantColors?.Vibrant ? `0 0 20px ${vibrantColors.Vibrant}80` : undefined }}
                       >
                         <PlayCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                         Play Now
@@ -442,7 +459,8 @@ const TitlePage = () => {
                 </div>
               </div>
             </div>
-            {/* Streaming Providers */}
+            
+            {/* Streaming Providers Inline */}
             {(() => {
               const prov = d["watch/providers"];
               const region = Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("America") ? "US" : "IN";
@@ -457,7 +475,7 @@ const TitlePage = () => {
               ].slice(0, 8).map((p) => ({ logo: p.logo_path, name: p.provider_name }));
               if (!flat.length) return null;
               return (
-                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl mt-8 sm:mt-12 mb-4">
+                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl mt-8 mb-8">
                   <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2 font-heading text-white">
                     <Play className="w-6 h-6 text-white" />
                     Available on
@@ -485,60 +503,97 @@ const TitlePage = () => {
               );
             })()}
 
-            {/* Content Sections */}
+            {/* Tab Navigation */}
+            <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl mb-8">
+              <div className="flex gap-6 overflow-x-auto hide-scrollbar border-b border-white/10">
+                {kind === "tv" && (
+                  <button 
+                    onClick={() => setActiveTab("episodes")} 
+                    className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "episodes" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+                  >
+                    Episodes
+                  </button>
+                )}
+                <button 
+                  onClick={() => setActiveTab("overview")} 
+                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "overview" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+                >
+                  Overview
+                </button>
+                <button 
+                  onClick={() => setActiveTab("cast")} 
+                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "cast" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+                >
+                  Cast & Crew
+                </button>
+                <button 
+                  onClick={() => setActiveTab("media")} 
+                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "media" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+                >
+                  Media
+                </button>
+                <button 
+                  onClick={() => setActiveTab("similar")} 
+                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "similar" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+                >
+                  Similar
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Content */}
             <div className="flex flex-col gap-12 pb-24">
-              {/* Seasons */}
-              {kind === "tv" && d.seasons && d.seasons.length > 0 && (
-                <div className="px-6 md:px-16 lg:px-24 max-w-5xl mt-8">
-                  <h2 className="text-2xl font-bold mb-4 font-heading text-white">Episodes</h2>
+              
+              {/* Episodes Tab */}
+              {activeTab === "episodes" && kind === "tv" && d.seasons && d.seasons.length > 0 && (
+                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl animate-in fade-in slide-in-from-bottom-4">
                   <SeasonsTab tvId={id} seasons={d.seasons || []} />
                 </div>
               )}
 
-              {/* Storyline & Details */}
-              <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl">
-                <h2 className="text-xl sm:text-2xl font-bold mb-4 font-heading text-white">Storyline</h2>
-                <p className="text-base sm:text-lg leading-relaxed text-gray-300">
-                  {d.overview || 'No overview available.'}
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
-                  {d.status && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Status</p>
-                      <p className="font-medium text-gray-200">{d.status}</p>
-                    </div>
-                  )}
-                  {(d as any).original_language && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Language</p>
-                      <p className="font-medium text-gray-200">{(d as any).original_language.toUpperCase()}</p>
-                    </div>
-                  )}
-                  {(d as any).budget && (d as any).budget > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Budget</p>
-                      <p className="font-medium text-gray-200">${((d as any).budget / 1000000).toFixed(1)}M</p>
-                    </div>
-                  )}
-                  {(d as any).revenue && (d as any).revenue > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Revenue</p>
-                      <p className="font-medium text-gray-200">${((d as any).revenue / 1000000).toFixed(1)}M</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Top Billed Cast */}
-              {d.credits?.cast?.length > 0 && (
-                <div className="w-full">
-                  <div className="px-4 sm:px-6 md:px-16 lg:px-24 mb-4">
-                    <h2 className="text-xl sm:text-2xl font-bold font-heading text-white">Top Cast</h2>
+              {/* Overview Tab */}
+              {activeTab === "overview" && (
+                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl animate-in fade-in slide-in-from-bottom-4">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 font-heading text-white">Storyline</h2>
+                  <p className="text-base sm:text-lg leading-relaxed text-gray-300">
+                    {d.overview || 'No overview available.'}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8 p-6 bg-white/5 rounded-2xl border border-white/5">
+                    {d.status && (
+                      <div>
+                        <p className="text-sm text-gray-400 mb-1">Status</p>
+                        <p className="font-medium text-gray-200">{d.status}</p>
+                      </div>
+                    )}
+                    {(d as any).original_language && (
+                      <div>
+                        <p className="text-sm text-gray-400 mb-1">Language</p>
+                        <p className="font-medium text-gray-200">{(d as any).original_language.toUpperCase()}</p>
+                      </div>
+                    )}
+                    {(d as any).budget && (d as any).budget > 0 && (
+                      <div>
+                        <p className="text-sm text-gray-400 mb-1">Budget</p>
+                        <p className="font-medium text-gray-200">${((d as any).budget / 1000000).toFixed(1)}M</p>
+                      </div>
+                    )}
+                    {(d as any).revenue && (d as any).revenue > 0 && (
+                      <div>
+                        <p className="text-sm text-gray-400 mb-1">Revenue</p>
+                        <p className="font-medium text-gray-200">${((d as any).revenue / 1000000).toFixed(1)}M</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex overflow-x-auto gap-4 pl-4 sm:pl-6 md:pl-16 lg:pl-24 scroll-pl-4 sm:scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-4 sm:pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
+                </div>
+              )}
+
+              {/* Cast Tab */}
+              {activeTab === "cast" && d.credits?.cast?.length > 0 && (
+                <div className="w-full animate-in fade-in slide-in-from-bottom-4">
+                  <div className="flex flex-wrap gap-6 px-4 sm:px-6 md:px-16 lg:px-24 max-w-7xl justify-center">
                     {d.credits.cast.slice(0, 18).map((c) => (
-                      <div key={c.id} className="flex-none w-[120px] sm:w-[140px] snap-start group text-center cursor-pointer">
-                        <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden border-2 border-transparent group-hover:border-white transition-all shadow-lg mb-3 bg-white/5">
+                      <div key={c.id} className="w-[120px] sm:w-[140px] group text-center cursor-pointer">
+                        <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden border border-white/10 group-hover:border-white/40 transition-all shadow-lg mb-3 bg-white/5">
                           <img 
                             src={c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : '/placeholder.svg'} 
                             loading="lazy" 
@@ -548,7 +603,7 @@ const TitlePage = () => {
                         </div>
                         <p className="text-sm font-semibold text-gray-200 line-clamp-1">{c.name}</p>
                         {c.character && (
-                          <p className="text-xs text-gray-500 line-clamp-2 mt-1">{c.character}</p>
+                          <p className="text-xs text-gray-400 line-clamp-2 mt-1">{c.character}</p>
                         )}
                       </div>
                     ))}
@@ -556,39 +611,50 @@ const TitlePage = () => {
                 </div>
               )}
 
-              {/* Official Trailer */}
-              {d.videos?.results?.find((v)=> v.site === 'YouTube' && v.type === 'Trailer') && (
-                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl">
-                  <h2 className="text-xl sm:text-2xl font-bold mb-6 font-heading text-white">Official Trailer</h2>
-                  <div className="aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                    <iframe
-                      className="w-full h-full"
-                      src={`https://www.youtube.com/embed/${d.videos!.results.find((v)=> v.site==='YouTube' && v.type==='Trailer')!.key}`}
-                      title="Trailer"
-                      loading="lazy"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
-                    />
-                  </div>
+              {/* Media Tab */}
+              {activeTab === "media" && (
+                <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl animate-in fade-in slide-in-from-bottom-4">
+                  {d.videos?.results?.find((v)=> v.site === 'YouTube' && v.type === 'Trailer') ? (
+                    <>
+                      <h2 className="text-xl sm:text-2xl font-bold mb-6 font-heading text-white">Official Trailer</h2>
+                      <div className="aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                        <iframe
+                          className="w-full h-full"
+                          src={`https://www.youtube.com/embed/${d.videos!.results.find((v)=> v.site==='YouTube' && v.type==='Trailer')!.key}`}
+                          title="Trailer"
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          allowFullScreen
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-16 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
+                      <p className="text-gray-400 text-lg">No media available.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
-
-
-              {/* You May Also Like */}
-              {data.recommendations?.length > 0 && (
-                <div className="w-full">
-                  <div className="px-4 sm:px-6 md:px-16 lg:px-24 mb-4">
-                    <h2 className="text-xl sm:text-2xl font-bold font-heading text-white">You May Also Like</h2>
-                  </div>
-                  <div className="flex overflow-x-auto gap-3 sm:gap-4 pl-4 sm:pl-6 md:pl-16 lg:pl-24 scroll-pl-4 sm:scroll-pl-6 md:scroll-pl-16 lg:scroll-pl-24 pr-4 sm:pr-8 pb-8 pt-4 snap-x snap-mandatory hide-scrollbar">
-                    {data.recommendations.slice(0, 18).map((m) => (
-                      <div key={`${m.mediaType}-${m.id}`} className="flex-none w-[160px] sm:w-[200px] md:w-[240px] snap-start">
-                        <MovieCard {...m} />
+              {/* Similar Tab */}
+              {activeTab === "similar" && (
+                <div className="w-full animate-in fade-in slide-in-from-bottom-4">
+                  {data.recommendations?.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 px-4 sm:px-6 md:px-16 lg:px-24 max-w-7xl">
+                      {data.recommendations.slice(0, 15).map((m) => (
+                        <div key={`${m.mediaType}-${m.id}`} className="relative group">
+                          <MovieCard {...m} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl">
+                      <div className="text-center py-16 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
+                        <p className="text-gray-400 text-lg">No recommendations available.</p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -627,7 +693,7 @@ const SeasonsTab = ({ tvId, seasons }: SeasonsTabProps) => {
       {/* Control Bar */}
       <div className="flex flex-col sm:flex-row items-center gap-4">
         <Select value={selectedSeason.toString()} onValueChange={(val) => setSelectedSeason(parseInt(val))}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white font-medium h-12 rounded-xl transition-colors focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger className="w-full sm:w-[180px] bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white font-medium h-12 rounded-full transition-colors focus:ring-0 focus:ring-offset-0">
             <SelectValue placeholder="Select Season" />
           </SelectTrigger>
           <SelectContent className="bg-black/90 backdrop-blur-xl border-white/10 text-white rounded-xl shadow-2xl">
@@ -645,7 +711,7 @@ const SeasonsTab = ({ tvId, seasons }: SeasonsTabProps) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search episode..." 
-            className="w-full pl-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder:text-gray-500 rounded-xl focus-visible:ring-0 focus-visible:border-white/30 hover:bg-white/10 transition-colors shadow-inner"
+            className="w-full pl-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder:text-gray-400 rounded-xl focus-visible:ring-0 focus-visible:border-white/30 hover:bg-white/10 transition-colors shadow-inner"
           />
         </div>
 
@@ -703,7 +769,7 @@ const SeasonsTab = ({ tvId, seasons }: SeasonsTabProps) => {
                   {episode.name}
                 </h4>
                 {episode.runtime > 0 && (
-                  <p className="text-xs text-gray-500 mt-1 font-medium tracking-wide">
+                  <p className="text-xs text-gray-400 mt-1 font-medium tracking-wide">
                     {episode.runtime} min
                   </p>
                 )}
@@ -712,7 +778,7 @@ const SeasonsTab = ({ tvId, seasons }: SeasonsTabProps) => {
                 </p>
               </div>
 
-              <button className="shrink-0 p-3 text-gray-500 hover:text-white hover:bg-white/10 rounded-full transition-all md:mr-4 opacity-0 group-hover:opacity-100 hidden sm:flex active:scale-95">
+              <button className="shrink-0 p-3 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all md:mr-4 opacity-0 group-hover:opacity-100 hidden sm:flex active:scale-95">
                 <PlayCircle className="w-6 h-6" />
               </button>
             </div>
