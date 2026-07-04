@@ -66,8 +66,8 @@ const Index = () => {
       keywords={['movies', 'tv shows', 'trending', 'watchlist', 'tmdb', 'cinema']}
       url="https://cinephile.app"
     />
-    <div id="main" className="min-h-screen bg-background animate-fade-in">
-      <Navbar />
+    <div id="main" className="min-h-screen bg-background animate-fade-in pb-tabbar">
+
       <Hero />
 
       {/* Top 10 Trending Section */}
@@ -91,7 +91,7 @@ const Index = () => {
             {top10Today.map((item, index) => (
               <div key={`top10-${item.mediaType}-${item.id}`} className="relative w-full h-full flex items-end justify-end pt-8 pr-2">
                 <span 
-                  className="absolute left-[-5%] sm:-left-2 bottom-4 sm:bottom-6 text-[100px] sm:text-[130px] md:text-[160px] lg:text-[180px] font-black leading-none text-background z-0 select-none tracking-tighter drop-shadow-2xl"
+                  className="absolute left-[-5%] sm:-left-2 bottom-10 sm:bottom-8 text-[100px] sm:text-[130px] md:text-[160px] lg:text-[180px] font-black leading-none text-background z-0 select-none tracking-tighter drop-shadow-2xl"
                   style={{
                     WebkitTextStroke: "3px rgba(255,255,255,0.7)",
                     textShadow: "4px 0 10px rgba(0,0,0,0.5)"
@@ -99,7 +99,7 @@ const Index = () => {
                 >
                   {index + 1}
                 </span>
-                <div className="relative z-10 w-[65%] sm:w-[70%] md:w-[75%] ml-auto shadow-[[-10px_0_20px_rgba(0,0,0,0.5)]]">
+                <div className="relative z-10 w-[80%] sm:w-[75%] md:w-[80%] ml-auto shadow-[[-10px_0_20px_rgba(0,0,0,0.5)]]">
                   <MovieCard 
                     {...item}
                   />

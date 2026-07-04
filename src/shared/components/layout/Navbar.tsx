@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Film, Search, X, User, LogOut, Settings, BookmarkPlus, ChevronDown, Home, Tv } from "lucide-react";
+import { Film, Search, X, User, LogOut, Settings, BookmarkPlus, ChevronDown, Home, Tv, Compass } from "lucide-react";
 
 import { useAuth } from "@/context/AuthProvider";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -145,35 +145,41 @@ const Navbar = () => {
   
   const navLinks = [
     { name: "Home", path: "/", icon: Home },
-    { name: "Movies", path: "/movies", icon: Film },
+    { name: "Browse", path: "/movies", icon: Compass },
     { name: "TV Shows", path: "/tv-shows", icon: Tv },
     { name: "Watchlist", path: "/watchlist", icon: BookmarkPlus },
   ];
 
+  const mobileNavLinks = [
+    { name: "Home", path: "/", icon: Home },
+    { name: "Browse", path: "/movies", icon: Compass },
+    { name: "Search", path: "/search", icon: Search },
+    { name: "Watchlist", path: "/watchlist", icon: BookmarkPlus },
+  ];
+
+  const isTitlePage = location.pathname.startsWith('/title/');
+
   return (
     <>
-      <div className={`fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isScrolled ? 'top-4' : 'top-0'}`}>
+      <div className={`${isTitlePage ? 'hidden' : 'hidden md:flex'} fixed left-0 right-0 z-50 justify-center px-4 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isScrolled ? 'top-2 md:top-4' : 'top-0'}`}>
         <nav className={`w-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative pointer-events-auto flex items-center justify-between ${
           isScrolled 
-            ? 'max-w-6xl lg-surface rounded-full px-6 py-2 md:px-8 md:py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10' 
-            : 'max-w-7xl bg-transparent px-4 py-6 md:px-8 md:py-8 border-transparent'
+            ? 'max-w-6xl md:lg-surface md:rounded-full px-4 py-2 md:px-6 md:py-2 md:shadow-[0_20px_50px_rgba(0,0,0,0.5)] md:border md:border-white/10' 
+            : 'max-w-7xl bg-transparent px-4 py-3 md:px-6 md:py-4 border-transparent'
         }`}>
-          {/* Apple-style Frosted Glass Background Layer - Only visible when scrolled */}
-          <div className={`absolute inset-0 rounded-full transition-opacity duration-500 -z-10 ${isScrolled ? 'opacity-100 lg-lens' : 'opacity-0'}`}>
+          {/* Apple-style Frosted Glass Background Layer - Only visible when scrolled on desktop */}
+          <div className={`hidden md:block absolute inset-0 rounded-full transition-opacity duration-500 -z-10 ${isScrolled ? 'opacity-100 lg-lens' : 'opacity-0'}`}>
             <div className="lg-highlight rounded-full"></div>
             <div className="lg-rim rounded-full"></div>
           </div>
 
           <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-primary text-primary-foreground rounded px-3 py-1 z-50">Skip to content</a>
           
-          {/* Logo - Left */}
-          <div className="flex-1 flex justify-start z-10">
-            <Link to="/" className="flex items-center gap-2 group relative">
-              <div className="bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-2.5 rounded-xl group-hover:rounded-2xl group-hover:shadow-lg group-hover:shadow-primary/50 group-hover:scale-110 transition-all duration-300 relative overflow-hidden hidden md:block">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <Film className="w-6 h-6 text-primary-foreground relative z-10" />
-              </div>
-              <span className={`font-heading font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-500 ${isScrolled ? 'text-2xl' : 'text-3xl'}`}>
+          {/* Logo - Left/Center */}
+          <div className="flex-1 flex items-center justify-center md:justify-start z-10">
+            <Link to="/" className="flex items-center gap-2 group relative translate-y-1">
+              <img src="/logo_cropped.png" alt="Cinephile" className="w-11 h-11 sm:w-12 sm:h-12 group-hover:scale-110 transition-transform duration-300 relative z-10 drop-shadow-lg" />
+              <span className={`hidden md:block font-heading font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-500 ${isScrolled ? 'text-2xl' : 'text-3xl'}`}>
                 Cinephile
               </span>
             </Link>
@@ -207,7 +213,7 @@ const Navbar = () => {
           </div>
 
           {/* Actions - Right */}
-          <div className="flex-1 flex justify-end items-center gap-2 md:gap-4 z-10">
+          <div className="hidden md:flex flex-1 justify-end items-center gap-2 md:gap-4 z-10">
               {/* Animated Search Button/Bar */}
               <div className="relative">
                 {/* Search Button (collapsed state) */}
@@ -540,32 +546,32 @@ const Navbar = () => {
         </nav>
       </div>
 
-      {/* Floating Bottom Tab Bar for Mobile */}
-      <div className="md:hidden fixed bottom-6 left-4 right-4 z-50 animate-fade-in">
-        <div className="bg-black/70 backdrop-blur-3xl border border-white/10 rounded-[2rem] px-2 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between overflow-hidden relative">
+      {/* Fixed Bottom Tab Bar for Mobile */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 animate-fade-in pb-safe">
+        <div className="bg-black/90 backdrop-blur-3xl border-t border-white/10 px-2 py-2 flex items-center justify-between overflow-hidden relative">
           {/* Animated glow matching active tab */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
-            {navLinks.map((link, idx) => (
+            {mobileNavLinks.map((link, idx) => (
                location.pathname === link.path && (
                  <div key={link.path} className="absolute w-1/5 h-full bg-primary blur-[20px] transition-all duration-500" style={{ left: `${(idx / 5) * 100}%` }} />
                )
             ))}
+            {(location.pathname === '/account' || location.pathname === '/auth') && (
+               <div className="absolute w-1/5 h-full bg-primary blur-[20px] transition-all duration-500" style={{ left: `80%` }} />
+            )}
           </div>
 
-          {navLinks.map((link) => {
+          {mobileNavLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.path;
             return (
               <Link
                 key={link.path}
                 to={link.path}
-                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 relative z-10 group"
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-1 relative z-10 group"
               >
                 <div className={`relative flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
-                  <Icon className={`w-5 h-5 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-200'}`} />
-                  {isActive && (
-                    <span className="absolute -bottom-2 w-1 h-1 rounded-full bg-primary" />
-                  )}
+                  <Icon className={`w-6 h-6 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-200'}`} />
                 </div>
                 <span className={`text-[10px] font-medium transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>
                   {link.name}
@@ -576,7 +582,7 @@ const Navbar = () => {
           
           <Link
             to={user ? "/account" : "/auth"}
-            className="flex-1 flex flex-col items-center justify-center gap-1 py-2 relative z-10 group"
+            className="flex-1 flex flex-col items-center justify-center gap-1 py-1 relative z-10 group"
           >
             <div className={`relative flex items-center justify-center transition-transform duration-300 ${location.pathname === '/account' || location.pathname === '/auth' ? 'scale-110' : 'group-hover:scale-110'}`}>
               {user ? (
@@ -584,10 +590,7 @@ const Navbar = () => {
                    {user.email?.[0].toUpperCase()}
                  </div>
               ) : (
-                 <User className={`w-5 h-5 transition-colors duration-300 ${location.pathname === '/auth' ? 'text-primary' : 'text-gray-400 group-hover:text-gray-200'}`} />
-              )}
-              {(location.pathname === '/account' || location.pathname === '/auth') && (
-                <span className="absolute -bottom-2 w-1 h-1 rounded-full bg-primary" />
+                 <User className={`w-6 h-6 transition-colors duration-300 ${location.pathname === '/auth' ? 'text-primary' : 'text-gray-400 group-hover:text-gray-200'}`} />
               )}
             </div>
             <span className={`text-[10px] font-medium transition-colors duration-300 ${location.pathname === '/account' || location.pathname === '/auth' ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>

@@ -58,10 +58,10 @@ const TVShows = () => {
       keywords={['tv shows', 'series', 'streaming', 'television', 'binge watch', 'top tv shows']}
       url="https://cinephile.app/tv-shows"
     />
-    <div id="main" className="min-h-screen bg-background">
-      <Navbar />
+    <div id="main" className="min-h-screen bg-background pb-tabbar">
+
       
-      <div className="pt-24">
+      <div className="pt-6 md:pt-24">
         {/* Modern Filter Header */}
         <div className="bg-transparent pt-8 pb-6">
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">

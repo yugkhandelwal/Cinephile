@@ -26,13 +26,14 @@ import { measureAllMetrics } from "./shared/lib/performance";
 import { OfflineIndicator } from "./shared/components/OfflineIndicator";
 import { setupPersistentCache } from "./shared/lib/persistentCache";
 import { ScrollToTop } from "./shared/components/ScrollToTop";
+import Navbar from "@/shared/components/layout/Navbar";
 
 // Configure React Query with better defaults
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000, // 1 minute
-      gcTime: 300_000, // 5 minutes (formerly cacheTime)
+      staleTime: 1000 * 60 * 60 * 24, // 24 hours (reset daily)
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
       retry: 3,
@@ -40,6 +41,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Activate persistent caching for instant loads across reloads
+setupPersistentCache(queryClient);
 
 const GlobalLoader = () => (
   <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-[9999] animate-fade-in">
@@ -116,6 +120,7 @@ const App = () => {
                 <Suspense fallback={<GlobalLoader />}>
                   <Analytics />
                   <OfflineIndicator />
+                  <Navbar />
                   <PullToRefresh>
                     <AnimatedRoutes />
                   </PullToRefresh>

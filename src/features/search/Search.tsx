@@ -1,19 +1,57 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
-import ContentSection from "../home/ContentSection";
 import MovieCard from "@/shared/components/MovieCard";
 import { useSearchParams } from "react-router-dom";
-import { useInfiniteSearchMulti } from "@/shared/api/tmdb/hooks";
-import { useEffect, useRef, useMemo } from "react";
+import { useInfiniteSearchMulti, useTrendingMovies } from "@/shared/api/tmdb/hooks";
+import { useEffect, useRef, useMemo, useState } from "react";
 import InfiniteGrid from "@/shared/components/InfiniteGrid";
 import { useScrollRestoration } from "@/shared/hooks/useScrollRestoration";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { searchQuerySchema } from "@/shared/lib/validation";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Search as SearchIcon, X, Clock, Flame } from "lucide-react";
+import { useLocalStorage } from "@/shared/hooks/useLocalStorage";
 
 const Search = () => {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const rawQuery = params.get("q") || "";
+  const [localQuery, setLocalQuery] = useState(rawQuery);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  const [filter, setFilter] = useState<'multi'|'movie'|'tv'>('multi');
+  const [recentSearches, setRecentSearches] = useLocalStorage<string[]>('recentSearches', []);
+
+  // Sync local query to URL with debounce
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (localQuery.trim()) {
+        setParams({ q: localQuery.trim() }, { replace: true });
+        
+        // Add to recent searches when performing a new search
+        if (localQuery.trim() !== rawQuery) {
+            setRecentSearches(prev => {
+                const updated = [localQuery.trim(), ...prev.filter(q => q.toLowerCase() !== localQuery.trim().toLowerCase())].slice(0, 5);
+                return updated;
+            });
+        }
+      } else {
+        setParams({}, { replace: true });
+      }
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [localQuery, setParams]);
+
+  // Sync URL to local if changed externally
+  useEffect(() => {
+    setLocalQuery(rawQuery);
+  }, [rawQuery]);
+
+  // Auto-focus on mobile mount
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile && !rawQuery && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
   
   // Validate and sanitize search query
   const sanitizedQuery = useMemo(() => {
@@ -22,12 +60,6 @@ const Search = () => {
     } catch {
       return ""; // Return empty string if validation fails
     }
-  }, [rawQuery]);
-
-  // Check if query is valid
-  const isValidQuery = useMemo(() => {
-    const result = searchQuerySchema.safeParse(rawQuery);
-    return result.success;
   }, [rawQuery]);
 
   const validationError = useMemo(() => {
@@ -40,6 +72,9 @@ const Search = () => {
   }, [rawQuery]);
 
   useDocumentTitle(sanitizedQuery ? `Search: ${sanitizedQuery}` : "Search");
+  
+  // Hooks for data
+  const { data: trendingMovies } = useTrendingMovies();
   const inf = useInfiniteSearchMulti(sanitizedQuery);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useScrollRestoration("search");
@@ -58,29 +93,150 @@ const Search = () => {
     return () => io.disconnect();
   }, [inf.hasNextPage, inf.isFetchingNextPage, sanitizedQuery]);
 
+  const filteredPages = useMemo(() => {
+    if (!inf.data?.pages) return undefined;
+    if (filter === 'multi') return inf.data.pages.map(p => p.items);
+    return inf.data.pages.map(p => p.items.filter(item => item.mediaType === filter));
+  }, [inf.data?.pages, filter]);
+
   return (
-  <div id="main" className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 container mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-heading font-bold mb-3 tracking-wide drop-shadow-sm text-white">
-            Search results {sanitizedQuery ? <span>for <span className="text-primary">{sanitizedQuery}</span></span> : ""}
-          </h1>
+    <div id="main" className="min-h-screen bg-background pb-tabbar">
+
+      
+      {/* Top Bar for Mobile */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-3 md:hidden border-b border-white/5 flex gap-2 items-center">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <SearchIcon className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="block w-full pl-10 pr-10 py-2.5 bg-white/10 border border-white/10 rounded-full text-white placeholder-gray-400 outline-none appearance-none focus:outline-none focus:border-primary transition-all shadow-inner lg-surface text-sm [webkit-tap-highlight-color:transparent]"
+            placeholder="Search..."
+            value={localQuery}
+            onChange={(e) => setLocalQuery(e.target.value)}
+          />
+          {localQuery && (
+            <button 
+              onClick={() => {
+                setLocalQuery('');
+                setParams({}, { replace: true });
+                searchInputRef.current?.focus();
+              }}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        
+        {/* Filter Dropdown */}
+        <select 
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as any)}
+          className="appearance-none h-[44px] bg-white/10 border border-white/10 rounded-full px-4 text-sm text-white/90 outline-none focus:outline-none focus:border-primary flex-shrink-0 min-w-[80px] text-center shadow-inner cursor-pointer [webkit-tap-highlight-color:transparent]"
+        >
+          <option value="multi" className="text-black">All</option>
+          <option value="movie" className="text-black">Movies</option>
+          <option value="tv" className="text-black">TV</option>
+        </select>
+      </div>
+
+      <div className="pt-6 md:pt-32 container mx-auto px-4 py-8">
+        
+        {/* Desktop Search Input Box */}
+        <div className="hidden md:block relative max-w-3xl mx-auto mb-8 md:mb-12">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <SearchIcon className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-full text-white placeholder-gray-400 outline-none appearance-none focus:outline-none focus:border-primary transition-all lg-surface text-lg shadow-lg"
+            placeholder="Search movies, TV shows..."
+            value={localQuery}
+            onChange={(e) => setLocalQuery(e.target.value)}
+          />
+          {localQuery && (
+            <button 
+              onClick={() => {
+                setLocalQuery('');
+                setParams({}, { replace: true });
+              }}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+
+        {/* Desktop Filter Chips */}
+        <div className="hidden md:flex gap-2 justify-center mb-12">
+          {[{label: 'All', value: 'multi'}, {label: 'Movies', value: 'movie'}, {label: 'TV Shows', value: 'tv'}].map(({label, value}) => (
+             <button 
+                key={value}
+                onClick={() => setFilter(value as any)}
+                className={`h-10 px-6 rounded-full border text-sm font-semibold whitespace-nowrap transition-all duration-200 ${filter === value ? 'bg-primary/20 border-primary/40 text-primary' : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'}`}
+             >
+                {label}
+             </button>
+          ))}
+        </div>
+
+        <div className="mb-6">
+          {sanitizedQuery && (
+            <h1 className="text-xl md:text-4xl font-heading font-bold mb-3 tracking-wide drop-shadow-sm text-white hidden md:block">
+              Results for <span className="text-primary">{sanitizedQuery}</span>
+            </h1>
+          )}
           
-          {!sanitizedQuery && (
-            <div className="flex flex-col items-center justify-center py-32 px-4 animate-fade-in">
-              <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
-                <div className="absolute inset-0 bg-primary/20 rounded-full blur-[40px] pointer-events-none" />
-                <div className="relative w-24 h-24 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-center shadow-2xl -rotate-12 hover:rotate-0 transition-transform duration-500 ease-out backdrop-blur-xl">
-                  <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+          {/* Empty State */}
+          {!sanitizedQuery && !localQuery && (
+            <div className="flex flex-col gap-10 animate-fade-in mt-4 md:mt-0">
+              
+              {recentSearches.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-white tracking-wide">Recent Searches</h3>
+                    <button 
+                      onClick={() => setRecentSearches([])}
+                      className="text-xs font-semibold text-white/40 hover:text-white transition-colors uppercase tracking-wider"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {recentSearches.map((search, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                           setLocalQuery(search);
+                           setTimeout(() => searchInputRef.current?.focus(), 50);
+                        }}
+                        className="flex items-center gap-2 h-10 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-medium text-white/80 transition-colors"
+                      >
+                        <Clock className="w-4 h-4 text-white/40" />
+                        {search}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <h3 className="text-3xl font-heading font-bold text-white mb-4 tracking-wide text-center">Discover something new</h3>
-              <p className="text-gray-400 text-center max-w-md mb-10 text-lg leading-relaxed">
-                Click the search icon in the top navigation bar to explore our extensive library of movies and TV shows.
-              </p>
+              )}
+
+              {recentSearches.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-[15vh] px-4 animate-fade-in opacity-80">
+                  <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-[40px] pointer-events-none" />
+                    <div className="relative w-20 h-20 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-center shadow-2xl -rotate-12 hover:rotate-0 transition-transform duration-500 ease-out backdrop-blur-xl">
+                      <SearchIcon className="w-10 h-10 text-primary" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-heading font-bold text-white mb-2 tracking-wide text-center">Search Cinephile</h3>
+                  <p className="text-gray-400 text-center max-w-sm text-sm leading-relaxed">
+                    Find your next favorite movie or TV show.
+                  </p>
+                </div>
+              )}
             </div>
           )}
           
@@ -96,23 +252,36 @@ const Search = () => {
           )}
         </div>
 
-  {inf.isLoading && <p className="text-muted-foreground">Loading…</p>}
-  {inf.isError && <p className="text-destructive">Failed to fetch results. Check your API key.</p>}
+        {/* Results */}
+        {sanitizedQuery && (
+          <>
+            {inf.isLoading && <p className="text-muted-foreground text-center py-10">Searching...</p>}
+            {inf.isError && <p className="text-destructive text-center py-10">Failed to fetch results. Check your connection.</p>}
 
-              <InfiniteGrid
-                title="Results"
-                subtitle="Across movies and TV"
-                pages={inf.data?.pages.map((p) => p.items)}
-                renderItem={(item) => <MovieCard key={`${item.mediaType}-${item.id}`} {...item} />}
-                isLoading={inf.isLoading}
-                isError={!!inf.isError}
-                fetchNextPage={inf.fetchNextPage}
-                hasNextPage={inf.hasNextPage}
-                isFetchingNextPage={inf.isFetchingNextPage}
-                onRetry={() => inf.refetch()}
-                emptyText={sanitizedQuery ? "No matches found" : "Type to search"}
-              />
-        <div ref={sentinelRef} className="h-10" />
+            {filteredPages && filteredPages[0]?.length === 0 && !inf.isLoading && (
+              <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
+                <SearchIcon className="w-12 h-12 text-white/20 mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">No matches found</h3>
+                <p className="text-white/50 text-sm">Try adjusting your filters or search term.</p>
+              </div>
+            )}
+
+            <InfiniteGrid
+              title=""
+              subtitle=""
+              pages={filteredPages}
+              renderItem={(item) => <MovieCard key={`${item.mediaType}-${item.id}`} {...item} />}
+              isLoading={inf.isLoading}
+              isError={!!inf.isError}
+              fetchNextPage={inf.fetchNextPage}
+              hasNextPage={inf.hasNextPage}
+              isFetchingNextPage={inf.isFetchingNextPage}
+              onRetry={() => inf.refetch()}
+              emptyText=""
+            />
+            <div ref={sentinelRef} className="h-10" />
+          </>
+        )}
       </div>
       <Footer />
     </div>

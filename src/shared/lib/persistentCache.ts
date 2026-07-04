@@ -31,7 +31,7 @@ export const setupPersistentCache = (queryClient: QueryClient) => {
   persistQueryClient({
     queryClient,
     persister,
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    maxAge: 1000 * 60 * 60 * 24, // 1 day (reset daily)
     buster: 'v1', // Increment to invalidate all cached data
     // Only persist successful queries
     dehydrateOptions: {

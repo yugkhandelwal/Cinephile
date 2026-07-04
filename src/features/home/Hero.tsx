@@ -34,7 +34,7 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
   }, [data]);
 
   return (
-    <div className="relative flex-none w-full h-full flex items-center justify-start overflow-hidden">
+    <div className="relative flex-none w-full h-full flex items-end md:items-center justify-start overflow-hidden pb-16 md:pb-0">
       {/* Full Background Image */}
       <div className="absolute inset-0 z-0">
         <motion.img
@@ -52,22 +52,25 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
       </div>
       
       {/* Hero Content */}
-      <div className="container mx-auto px-4 md:px-12 relative z-20 mt-20 md:mt-32">
+      <div className="container mx-auto px-4 md:px-12 relative z-20 mt-0 md:mt-32">
         <div className="max-w-3xl animate-fade-in">
           {logoUrl ? (
             <img 
               src={logoUrl} 
               alt={featured.title} 
-              className="max-w-[300px] md:max-w-[450px] lg:max-w-[500px] h-auto object-contain mb-6 drop-shadow-2xl"
+              className="max-w-[45vw] sm:max-w-[300px] md:max-w-[450px] lg:max-w-[500px] max-h-[120px] sm:max-h-none h-auto object-contain mb-6 drop-shadow-2xl"
             />
           ) : (
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-3 leading-[1.1] text-white font-heading uppercase tracking-tight drop-shadow-2xl">
+            <h1 
+              className="font-bold mb-3 leading-[1.1] text-white font-heading uppercase tracking-tight drop-shadow-2xl"
+              style={{ fontSize: 'clamp(2rem, 8vw, 4rem)' }}
+            >
               {featured.title}
             </h1>
           )}
           
           {/* Meta Info Row */}
-          <div className="flex items-center gap-3 mb-6 text-sm font-semibold tracking-wide text-white/70">
+          <div className="hidden md:flex items-center gap-3 mb-6 text-sm font-semibold tracking-wide text-white/70">
             <span className="flex items-center text-amber-400 gap-1">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="mb-[2px]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               {featured.rating?.toFixed(1)}
@@ -82,15 +85,15 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
             )}
           </div>
 
-          <p className="text-base md:text-lg text-white/60 mb-10 line-clamp-3 md:line-clamp-4 max-w-xl font-medium leading-relaxed drop-shadow-md">
+          <p className="hidden md:block text-base md:text-lg text-white/60 mb-10 line-clamp-3 md:line-clamp-4 max-w-xl font-medium leading-relaxed drop-shadow-md">
             {featured.description}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-row gap-3 w-full sm:w-auto mt-2">
             <Button 
               size="lg" 
               onClick={() => navigate(`/title/movie/${featured.id}`)}
-              className="bg-white text-black hover:bg-white/90 rounded-full px-8 h-12 gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all text-sm font-bold"
+              className="flex-1 sm:flex-none bg-white text-black hover:bg-white/90 rounded-full px-4 sm:px-8 h-12 gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all text-sm font-bold"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Play
@@ -99,7 +102,7 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
               size="lg" 
               variant="outline"
               onClick={() => navigate(`/title/movie/${featured.id}`)}
-              className="rounded-full px-8 h-12 gap-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:border-white/30 backdrop-blur-md active:scale-95 transition-all text-sm font-semibold"
+              className="flex-1 sm:flex-none rounded-full px-4 sm:px-8 h-12 gap-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:border-white/30 backdrop-blur-md active:scale-95 transition-all text-sm font-semibold"
             >
               <Info className="w-5 h-5" />
               See More
@@ -149,7 +152,7 @@ const Hero = () => {
 
   if (!trendingMovies || trendingMovies.length === 0) {
     return (
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-background animate-pulse">
+      <section className="relative h-[65vh] md:h-[85vh] flex items-center justify-center overflow-hidden bg-background animate-pulse">
         <div className="absolute inset-0 bg-muted/20" />
       </section>
     );
@@ -157,7 +160,7 @@ const Hero = () => {
 
   return (
     <section 
-      className="relative h-screen w-full bg-black overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" 
+      className="relative h-[65vh] md:h-[85vh] w-full bg-black overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" 
       ref={emblaRef}
       tabIndex={0}
       onKeyDown={handleKeyDown}

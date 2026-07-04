@@ -58,10 +58,10 @@ const Watchlist = () => {
       keywords={['watchlist', 'my movies', 'saved shows', 'to watch', 'movie list']}
       url="https://cinephile.app/watchlist"
     />
-    <div id="main" className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+    <div id="main" className="min-h-screen bg-background flex flex-col pb-tabbar">
+
       
-      <div className="pt-24 pb-20 flex-grow">
+      <div className="pt-6 md:pt-24 pb-20 flex-grow">
         {/* Modern Header */}
         <div className="bg-transparent pt-8 pb-6 mb-2">
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
