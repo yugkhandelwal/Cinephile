@@ -19,9 +19,9 @@ const Recommendations = () => {
   }, [mode]);
 
   return (
-  <div id="main" className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 container mx-auto px-4 py-12">
+  <div id="main" className="min-h-screen bg-background pb-tabbar">
+
+      <div className="pt-6 md:pt-24 container mx-auto px-4 py-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-6">Recommendations</h1>
         {!user && <p className="text-muted-foreground">Sign in to see personalized recommendations.</p>}
         <div className="mb-6 flex items-center gap-3">

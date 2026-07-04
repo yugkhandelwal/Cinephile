@@ -21,7 +21,7 @@ const ContentSection = ({ title, subtitle, children, onViewAll }: ContentSection
       <div className="pl-6 md:pl-12 lg:pl-16 pr-6">
         <div className="flex items-end justify-between mb-8">
           <div className="flex flex-col gap-2">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-heading tracking-tight">{title}</h2>
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground font-heading tracking-tight">{title}</h2>
             {subtitle && <p className="text-base text-muted-foreground mt-1">{subtitle}</p>}
           </div>
           
@@ -45,13 +45,13 @@ const ContentSection = ({ title, subtitle, children, onViewAll }: ContentSection
             ? children.map((child, i) => (
                 <div 
                   key={i} 
-                  className="flex-none w-[180px] sm:w-[220px] md:w-[260px] lg:w-[280px] snap-start"
+                  className="flex-none w-[150px] sm:w-[200px] md:w-[260px] lg:w-[280px] snap-start"
                 >
                   {child}
                 </div>
               ))
             : <div 
-                className="flex-none w-[180px] sm:w-[220px] md:w-[260px] lg:w-[280px] snap-start"
+                className="flex-none w-[150px] sm:w-[200px] md:w-[260px] lg:w-[280px] snap-start"
               >
                 {children}
               </div>}

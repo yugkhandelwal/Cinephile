@@ -145,9 +145,9 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
       className="group relative w-full flex flex-col cursor-pointer"
     >
       {/* Poster Image */}
-      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 shadow-md group-hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.7)] transition-all duration-500 ease-out">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 shadow-md md:group-hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.7)] transition-all duration-500 ease-out">
         {/* Inner Glassy Border */}
-        <div className="absolute inset-0 rounded-2xl border border-white/5 group-hover:border-white/20 z-20 pointer-events-none transition-colors duration-500" />
+        <div className="absolute inset-0 rounded-2xl border border-white/5 md:group-hover:border-white/20 z-20 pointer-events-none transition-colors duration-500" />
         
         {/* Skeleton while image loads */}
         {!imageLoaded && (
@@ -161,36 +161,38 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
           onLoad={() => setImageLoaded(true)}
           className={`w-full h-full object-cover transition-all duration-700 ease-out ${
             imageLoaded 
-              ? "scale-100 blur-0 group-hover:scale-105 opacity-100" 
+              ? "scale-100 blur-0 md:group-hover:scale-105 opacity-100" 
               : "scale-110 blur-xl opacity-0"
           }`}
         />
         
         {/* Subtle bottom gradient to ensure overlay icons are visible */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 z-10" />
+
+        {/* Remove Button (Always Visible if provided, Outside of Hover Overlay) */}
+        {onRemove && (
+          <motion.button 
+            whileTap={{ scale: 0.8 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }} 
+            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-destructive hover:text-white transition-all duration-300 border border-white/20 shadow-lg z-30 pointer-events-auto"
+            title="Remove"
+          >
+            <X className="w-4 h-4" />
+          </motion.button>
+        )}
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center pointer-events-none lg:pointer-events-auto z-10">
+        <div className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center pointer-events-none lg:pointer-events-auto z-10">
           {/* Play Icon */}
-          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white transform scale-90 group-hover:scale-100 transition-all duration-500 shadow-2xl border border-white/30">
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white transform scale-90 md:group-hover:scale-100 transition-all duration-500 shadow-2xl border border-white/30">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </div>
           
-          {/* Action Buttons (Top Right) */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 transform lg:translate-x-4 opacity-100 lg:opacity-0 lg:group-hover:translate-x-0 lg:group-hover:opacity-100 transition-all duration-500 delay-100 pointer-events-auto z-30">
-            {onRemove && (
-              <motion.button 
-                whileTap={{ scale: 0.8 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove();
-                }} 
-                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-destructive hover:text-white transition-all duration-300 border border-white/20 shadow-lg"
-                title="Remove"
-              >
-                <X className="w-4 h-4" />
-              </motion.button>
-            )}
+          {/* Action Buttons (Top Right, Desktop Only) */}
+          <div className="absolute top-3 right-3 hidden md:flex flex-col gap-2 transform lg:translate-x-4 opacity-100 lg:opacity-0 lg:group-hover:translate-x-0 lg:group-hover:opacity-100 transition-all duration-500 delay-100 pointer-events-auto z-30">
             <motion.button 
               whileTap={{ scale: 0.8 }}
               onClick={onLike} 

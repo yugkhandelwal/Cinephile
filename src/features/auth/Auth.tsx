@@ -180,26 +180,68 @@ const Auth = () => {
       {trendingMovies && trendingMovies.length > 0 && (
         <div className="absolute inset-0 z-0 overflow-hidden select-none pointer-events-none flex flex-col justify-center gap-6 rotate-[-6deg] scale-125 origin-center">
           <motion.div 
-            className="flex gap-6 w-max"
+            className="flex w-max"
             animate={{ x: ["0%", "-50%"] }}
             transition={{ repeat: Infinity, ease: "linear", duration: 80 }}
           >
-            {[...trendingMovies, ...trendingMovies].map((movie, i) => (
-              <div key={`row1-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
-              </div>
-            ))}
+            {/* First Set */}
+            <div className="flex gap-6 pr-6">
+              {trendingMovies.map((movie, i) => (
+                <div key={`row1-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+            {/* Duplicate Set for Seamless Loop */}
+            <div className="flex gap-6 pr-6">
+              {trendingMovies.map((movie, i) => (
+                <div key={`row1-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
           </motion.div>
+
           <motion.div 
-            className="flex gap-6 w-max -ml-[50%]"
-            animate={{ x: ["0%", "50%"] }}
+            className="flex w-max"
+            animate={{ x: ["-50%", "0%"] }}
             transition={{ repeat: Infinity, ease: "linear", duration: 70 }}
           >
-            {[...trendingMovies, ...trendingMovies].map((movie, i) => (
-              <div key={`row2-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
-              </div>
-            ))}
+            <div className="flex gap-6 pr-6">
+              {trendingMovies.map((movie, i) => (
+                <div key={`row2-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-6 pr-6">
+              {trendingMovies.map((movie, i) => (
+                <div key={`row2-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div 
+            className="flex w-max"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ repeat: Infinity, ease: "linear", duration: 90 }}
+          >
+            <div className="flex gap-6 pr-6">
+              {trendingMovies.map((movie, i) => (
+                <div key={`row3-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-6 pr-6">
+              {trendingMovies.map((movie, i) => (
+                <div key={`row3-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
       )}
@@ -207,7 +249,7 @@ const Auth = () => {
       <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-0 pointer-events-none" />
       
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Navbar />
+
         
         {/* Main Content */}
         <div className="flex-1 flex items-center justify-center px-4 py-24 relative overflow-hidden">

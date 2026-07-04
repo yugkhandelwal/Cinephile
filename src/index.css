@@ -403,3 +403,16 @@ a:not([class]) {
 .lg-surface {
   position: relative;
 }
+
+/* Safe area utilities and mobile specific classes */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+@media (max-width: 767px) {
+  .pb-tabbar { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+  .mb-tabbar { margin-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+}
+
+/* Viewport height without address bar for mobile */
+.h-dvh { height: 100dvh; }
+.min-h-dvh { min-height: 100dvh; }

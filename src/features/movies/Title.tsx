@@ -261,7 +261,7 @@ const TitlePage = () => {
   );
 
   return (
-    <div id="main" className="min-h-screen bg-background animate-fade-in">
+    <div id="main" className="min-h-screen bg-background animate-fade-in pb-tabbar">
       <div className="w-full">
         {isLoading && (
           <div className="pt-24 container mx-auto px-4 py-12">
@@ -312,13 +312,13 @@ const TitlePage = () => {
                     
                     {/* Render trailer on top, fading in once loaded */}
                     {trailer && (
-                      <div className={`absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-black flex items-center justify-center transition-opacity duration-1000 ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}>
+                      <div className={`absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-black transition-opacity duration-1000 ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}>
                         <iframe
                           ref={playerRef}
                           onLoad={() => {
                             setTimeout(() => setIsVideoLoaded(true), 1500);
                           }}
-                          className="w-[150vw] h-[150vh] max-w-none opacity-70 pointer-events-none"
+                          className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2 opacity-70 pointer-events-none"
                           src={`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&disablekb=1&iv_load_policy=3&loop=1&playlist=${trailer.key}`}
                           title="Trailer"
                           allow="autoplay; encrypted-media"
@@ -355,8 +355,11 @@ const TitlePage = () => {
                         </div>
                       ) : (
                         <h1 
-                          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 font-heading tracking-wide drop-shadow-2xl text-white transition-all duration-1000"
-                          style={{ textShadow: vibrantColors?.Vibrant ? `0 4px 40px ${vibrantColors.Vibrant}80` : undefined }}
+                          className="font-bold mb-4 sm:mb-6 font-heading tracking-wide drop-shadow-2xl text-white transition-all duration-1000"
+                          style={{ 
+                            fontSize: 'clamp(2rem, 8vw, 4rem)',
+                            textShadow: vibrantColors?.Vibrant ? `0 4px 40px ${vibrantColors.Vibrant}80` : undefined 
+                          }}
                         >
                           {d.title || d.name}
                         </h1>
@@ -364,7 +367,7 @@ const TitlePage = () => {
                     })()}
                     
                     {/* Meta Info */}
-                    <div className={`flex flex-wrap items-center gap-4 mb-8 text-sm md:text-base font-medium transition-all duration-1000 ${isInactive ? 'opacity-0 h-0 overflow-hidden !mb-0' : 'opacity-100 h-6'}`}>
+                    <div className={`flex flex-wrap items-center gap-4 mb-8 text-sm md:text-base font-medium transition-all duration-1000 ${isInactive ? 'opacity-0 h-0 overflow-hidden !mb-0' : 'opacity-100 h-auto'}`}>
                       {d.vote_average > 0 && (
                         <div className="flex items-center gap-1.5 text-yellow-500 bg-black/40 px-2 py-1 rounded-md border border-white/5">
                           <Star className="w-4 h-4 fill-current" />
@@ -395,9 +398,10 @@ const TitlePage = () => {
                       {/* Genres */}
                       {d.genres && d.genres.length > 0 && (
                         <div className="flex flex-wrap gap-2 items-center ml-2 border-l border-white/20 pl-4">
-                          {d.genres.slice(0, 3).map((g) => (
-                            <span key={g.id} className="text-gray-200">
+                          {d.genres.slice(0, 3).map((g, index, array) => (
+                            <span key={g.id} className="text-gray-200 flex items-center gap-2">
                               {g.name}
+                              {index < array.length - 1 && <span className="text-gray-400 font-bold">•</span>}
                             </span>
                           ))}
                         </div>
@@ -405,26 +409,27 @@ const TitlePage = () => {
                     </div>
                     
                     {/* Action Buttons */}
-                    <div className={`flex flex-wrap items-center gap-3 sm:gap-4 transition-all duration-1000 ${isInactive ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
+                    <div className={`flex flex-row items-center gap-3 sm:gap-4 overflow-x-auto hide-scrollbar w-[100vw] -ml-4 pl-4 pr-4 sm:ml-0 sm:pl-0 sm:pr-0 sm:w-auto pb-2 transition-all duration-1000 ${isInactive ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
                       <button 
                         onClick={() => navigate(`/play/${kind}/${id}${kind === 'tv' ? '?s=1&e=1' : ''}`)}
                         className="flex flex-1 sm:flex-none items-center justify-center gap-2 bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold hover:bg-gray-200 transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)] text-sm sm:text-base whitespace-nowrap"
                         style={{ boxShadow: vibrantColors?.Vibrant ? `0 0 20px ${vibrantColors.Vibrant}80` : undefined }}
                       >
                         <PlayCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-                        Play Now
+                        <span className="sm:hidden">Play</span>
+                        <span className="hidden sm:inline">Play Now</span>
                       </button>
                       
                       <button
                         onClick={handleAddWatchlist}
                         disabled={saving}
-                        className={`flex flex-1 sm:flex-none items-center justify-center gap-2 backdrop-blur-md border px-5 sm:px-6 py-3 sm:py-4 rounded-full font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base whitespace-nowrap shadow-lg ${
+                        className={`flex items-center justify-center gap-2 backdrop-blur-md border rounded-full font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shrink-0 w-12 h-12 sm:w-auto sm:h-auto sm:px-6 sm:py-4 ${
                           isSaved ? "bg-primary text-white border-primary hover:bg-primary/80" : "bg-white/10 text-white border-white/20 hover:bg-white/20"
                         }`}
                         aria-label={saving ? "Updating..." : isSaved ? "Remove from Watchlist" : "Add to Watchlist"}
                       >
                         {saving ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : isSaved ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <BookmarkPlus className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        {isSaved ? "Added" : "Watchlist"}
+                        <span className="hidden sm:inline text-base whitespace-nowrap">{isSaved ? "Added" : "Watchlist"}</span>
                       </button>
                       
                       <button
@@ -504,8 +509,8 @@ const TitlePage = () => {
             })()}
 
             {/* Tab Navigation */}
-            <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl mb-8">
-              <div className="flex gap-6 overflow-x-auto hide-scrollbar border-b border-white/10">
+            <div className="max-w-5xl mb-8 border-b border-white/10 w-full">
+              <div className="flex gap-6 overflow-x-auto hide-scrollbar px-4 sm:px-6 md:px-16 lg:px-24">
                 {kind === "tv" && (
                   <button 
                     onClick={() => setActiveTab("episodes")} 
@@ -691,36 +696,38 @@ const SeasonsTab = ({ tvId, seasons }: SeasonsTabProps) => {
   return (
     <div className="space-y-6 pt-4">
       {/* Control Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <Select value={selectedSeason.toString()} onValueChange={(val) => setSelectedSeason(parseInt(val))}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white font-medium h-12 rounded-full transition-colors focus:ring-0 focus:ring-offset-0">
-            <SelectValue placeholder="Select Season" />
-          </SelectTrigger>
-          <SelectContent className="bg-black/90 backdrop-blur-xl border-white/10 text-white rounded-xl shadow-2xl">
-            {regularSeasons.map((season) => (
-              <SelectItem key={season.season_number} value={season.season_number.toString()} className="hover:bg-white/10 focus:bg-white/10 cursor-pointer">
-                Season {season.season_number}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
+      <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
         <div className="relative flex-1 w-full group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-white transition-colors" />
           <Input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search episode..." 
-            className="w-full pl-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder:text-gray-400 rounded-xl focus-visible:ring-0 focus-visible:border-white/30 hover:bg-white/10 transition-colors shadow-inner"
+            className="w-full pl-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder:text-gray-400 rounded-full focus-visible:ring-0 focus-visible:border-white/30 hover:bg-white/10 transition-colors shadow-inner"
           />
         </div>
 
-        <button 
-          onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-          className="h-12 w-12 flex items-center justify-center bg-white/5 backdrop-blur-md border border-white/10 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all shrink-0 active:scale-95"
-        >
-          <ArrowDownUp className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-start sm:justify-end">
+          <Select value={selectedSeason.toString()} onValueChange={(val) => setSelectedSeason(parseInt(val))}>
+            <SelectTrigger className="w-auto min-w-[140px] sm:w-[180px] bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white font-medium h-12 rounded-full transition-colors focus:ring-0 focus:ring-offset-0">
+              <SelectValue placeholder="Select Season" />
+            </SelectTrigger>
+            <SelectContent className="bg-black/90 backdrop-blur-xl border-white/10 text-white rounded-xl shadow-2xl">
+              {regularSeasons.map((season) => (
+                <SelectItem key={season.season_number} value={season.season_number.toString()} className="hover:bg-white/10 focus:bg-white/10 cursor-pointer">
+                  Season {season.season_number}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <button 
+            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            className="h-12 w-12 flex items-center justify-center bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-all shrink-0 active:scale-95"
+          >
+            <ArrowDownUp className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Episodes List */}

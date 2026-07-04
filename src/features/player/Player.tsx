@@ -75,12 +75,9 @@ const Player = () => {
   const { data: tvDetails } = useDetails(type === "tv" ? "tv" : "movie", id);
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col w-full h-full z-[100] animate-fade-in">
-      {/* Top Navigation Bar */}
-      {/* We use a large invisible hit area to trigger the hover state for the controls */}
-      <div className="absolute top-0 left-0 right-0 h-32 z-40 peer" />
-      
-      <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none transition-all duration-500 opacity-0 peer-hover:opacity-100 hover:opacity-100">
+    <div className="fixed inset-0 bg-black flex flex-col justify-center md:block w-full h-full z-[100] animate-fade-in">
+      {/* Top Navigation Bar / Controls */}
+      <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 md:p-6 bg-transparent md:bg-gradient-to-b md:from-black/80 md:via-black/40 md:to-transparent pointer-events-auto transition-all duration-500 md:opacity-0 md:hover:opacity-100 flex-shrink-0">
         <button 
           onClick={() => {
             if (window.history.state && window.history.state.idx > 0) {
@@ -89,17 +86,17 @@ const Player = () => {
               navigate(`/title/${type}/${id}`, { replace: true });
             }
           }}
-          className="pointer-events-auto flex items-center justify-center w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full text-white transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 hover:scale-105 active:scale-95 group"
+          className="pointer-events-auto flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-white/10 md:bg-black/40 hover:bg-white/20 md:hover:bg-black/60 backdrop-blur-2xl rounded-full text-white transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 hover:scale-105 active:scale-95 group shrink-0"
           title="Close Player"
         >
-          <X className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+          <X className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
         </button>
 
-        <div className="pointer-events-auto flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-2xl pl-5 pr-2 py-2 rounded-full border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.8)] transition-all hover:bg-black/50 hover:border-white/20">
-            <MonitorPlay className="w-4 h-4 text-primary animate-pulse" />
+        <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1 md:gap-2 bg-white/10 md:bg-black/40 backdrop-blur-2xl pl-3 pr-1 py-1.5 md:pl-5 md:pr-2 md:py-2 rounded-full border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.8)] transition-all hover:bg-white/20 md:hover:bg-black/50 hover:border-white/20">
+            <MonitorPlay className="w-4 h-4 text-primary animate-pulse shrink-0" />
             <Select value={activeServer} onValueChange={setActiveServer}>
-              <SelectTrigger className="w-[110px] h-8 bg-transparent border-0 text-white font-semibold focus:ring-0 focus:ring-offset-0 px-2 tracking-wide">
+              <SelectTrigger className="w-[90px] md:w-[110px] h-6 md:h-8 bg-transparent border-0 text-white font-semibold focus:ring-0 focus:ring-offset-0 px-1 md:px-2 tracking-wide text-xs md:text-sm">
                 <SelectValue placeholder="Server" />
               </SelectTrigger>
               <SelectContent className="z-[200] bg-black/80 backdrop-blur-3xl border-white/10 text-white rounded-2xl shadow-2xl p-2">
@@ -116,10 +113,10 @@ const Player = () => {
             <Sheet>
               <SheetTrigger asChild>
                 <button 
-                  className="pointer-events-auto flex items-center justify-center w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full text-white transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 hover:scale-105 active:scale-95 group"
+                  className="pointer-events-auto flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-white/10 md:bg-black/40 hover:bg-white/20 md:hover:bg-black/60 backdrop-blur-2xl rounded-full text-white transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 hover:scale-105 active:scale-95 group shrink-0"
                   title="Episodes"
                 >
-                  <ListVideo className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                  <ListVideo className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform duration-300" />
                 </button>
               </SheetTrigger>
               <SheetContent 
@@ -199,7 +196,7 @@ const Player = () => {
       </div>
 
       {/* Video Player Container */}
-      <div className="flex-1 w-full h-full relative">
+      <div className="w-full aspect-video md:aspect-auto md:flex-1 md:h-full relative shrink-0">
         <iframe
           key={iframeUrl}
           src={iframeUrl}

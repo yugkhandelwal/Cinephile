@@ -116,7 +116,7 @@ const AccountSettings = () => {
   }) : 'Unknown';
 
   return (
-    <div className="min-h-screen bg-background flex flex-col pt-24 pb-12 animate-fade-in relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col pt-6 md:pt-24 pb-tabbar animate-fade-in relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />

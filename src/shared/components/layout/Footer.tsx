@@ -10,7 +10,7 @@ const Footer = () => {
 
   const quickLinks = [
     { label: "Home", href: "/" },
-    { label: "Movies", href: "/movies" },
+    { label: "Browse", href: "/movies" },
     { label: "TV Shows", href: "/tv-shows" },
     { label: "Search", href: "/search" },
     { label: "My Watchlist", href: "/watchlist" }
@@ -34,14 +34,12 @@ const Footer = () => {
   };
 
   return (
-    <footer className="border-t border-white/5 bg-transparent mt-20">
+    <footer className="hidden md:block border-t border-white/5 bg-transparent mt-20">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                <Film className="w-6 h-6" />
-              </div>
+            <div className="flex items-center gap-3 mb-4">
+              <img src="/logo_cropped.png" alt="Cinephile" className="w-10 h-10 drop-shadow-md" />
               <span className="text-2xl font-heading font-bold text-white tracking-tight">Cinephile</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
