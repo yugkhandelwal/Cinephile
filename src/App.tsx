@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Suspense, lazy, useEffect } from "react";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 const Index = lazy(() => import("./features/home/Index"));
 const Movies = lazy(() => import("./features/movies/Movies"));
 const TVShows = lazy(() => import("./features/tv-shows/TVShows"));
@@ -119,6 +120,7 @@ const App = () => {
                 <ScrollToTop />
                 <Suspense fallback={<GlobalLoader />}>
                   <Analytics />
+                  <VercelAnalytics />
                   <OfflineIndicator />
                   <Navbar />
                   <PullToRefresh>
