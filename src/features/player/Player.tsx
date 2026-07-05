@@ -49,6 +49,12 @@ const SERVERS: ServerInfo[] = [
     name: "Server 4",
     getMovieUrl: (id) => `https://vidsrc-embed.ru/embed/movie/${id}`,
     getTvUrl: (id, season, episode) => `https://vidsrc-embed.ru/embed/tv/${id}/${season}-${episode}`
+  },
+  {
+    id: "vidcore",
+    name: "Server 5",
+    getMovieUrl: (id) => `https://vidcore.net/movie/${id}`,
+    getTvUrl: (id, season, episode) => `https://vidcore.net/tv/${id}/${season}/${episode}`
   }
 ];
 
