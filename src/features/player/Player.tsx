@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { X, MonitorPlay, ListVideo } from "lucide-react";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { useSeason, useDetails } from "@/shared/api/tmdb/hooks";
+import { generateSeoUrl } from "@/shared/lib/utils";
 import {
   Sheet,
   SheetContent,
@@ -41,8 +42,8 @@ const SERVERS: ServerInfo[] = [
   {
     id: "videasy",
     name: "Server 3",
-    getMovieUrl: (id) => `https://player.videasy.net/movie/${id}`,
-    getTvUrl: (id, season, episode) => `https://player.videasy.net/tv/${id}/${season}/${episode}`
+    getMovieUrl: (id) => `https://player.videasy.net/movie/${id}?color=8B5CF6&overlay=true`,
+    getTvUrl: (id, season, episode) => `https://player.videasy.net/tv/${id}/${season}/${episode}?nextEpisode=true&autoplayNextEpisode=true&episodeSelector=true&overlay=true&color=8B5CF6`
   },
   {
     id: "vidsrc",
@@ -63,6 +64,7 @@ const Player = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
+  const actualId = id?.split('-')[0];
   const season = searchParams.get("s") || "1";
   const episode = searchParams.get("e") || "1";
 
@@ -73,12 +75,12 @@ const Player = () => {
   const server = SERVERS.find(s => s.id === activeServer) || SERVERS[0];
 
   const iframeUrl = type === "tv" 
-    ? server.getTvUrl(id!, season, episode)
-    : server.getMovieUrl(id!);
+    ? server.getTvUrl(actualId!, season, episode)
+    : server.getMovieUrl(actualId!);
 
   // Fetch episodes for the current season if it's a TV show
-  const { data: seasonData } = useSeason(type === "tv" ? id : undefined, type === "tv" ? Number(season) : undefined);
-  const { data: tvDetails } = useDetails(type === "tv" ? "tv" : "movie", id);
+  const { data: seasonData } = useSeason(type === "tv" ? actualId : undefined, type === "tv" ? Number(season) : undefined);
+  const { data: tvDetails } = useDetails(type === "tv" ? "tv" : "movie", actualId);
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col justify-center md:block w-full h-full z-[100] animate-fade-in">
@@ -89,7 +91,7 @@ const Player = () => {
             if (window.history.state && window.history.state.idx > 0) {
               navigate(-1);
             } else {
-              navigate(`/title/${type}/${id}`, { replace: true });
+              navigate(generateSeoUrl(type as 'movie' | 'tv', actualId!, tvDetails?.title || tvDetails?.name), { replace: true });
             }
           }}
           className="pointer-events-auto flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-white/10 md:bg-black/40 hover:bg-white/20 md:hover:bg-black/60 backdrop-blur-2xl rounded-full text-white transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 hover:scale-105 active:scale-95 group shrink-0"
@@ -176,6 +178,8 @@ const Player = () => {
                           <img 
                             src={`https://image.tmdb.org/t/p/w300${ep.still_path}`} 
                             alt={ep.name}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
                         ) : (

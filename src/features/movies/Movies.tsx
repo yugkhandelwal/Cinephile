@@ -11,6 +11,7 @@ import { useScrollRestoration } from "@/shared/hooks/useScrollRestoration";
 import BackToTop from "@/shared/components/BackToTop";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { SEO } from "@/shared/components/SEO";
+import { Helmet } from "react-helmet-async";
 
 const Movies = () => {
   const [params, setParams] = useSearchParams();
@@ -64,6 +65,23 @@ const Movies = () => {
       keywords={['movies', 'tv shows', 'popular', 'trending', 'cinema', 'top rated']}
       url="https://cinephile.app/movies"
     />
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          itemListElement: discoverInf.data?.pages?.[0]?.items?.slice(0, 20).map((item, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            item: {
+              '@type': item.mediaType === 'movie' ? 'Movie' : 'TVSeries',
+              name: item.title,
+              url: `https://cinephile.app/${item.mediaType}/${item.id}`
+            }
+          })) || []
+        })}
+      </script>
+    </Helmet>
     <div id="main" className="min-h-screen bg-background pb-tabbar">
 
       

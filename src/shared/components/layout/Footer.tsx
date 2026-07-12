@@ -39,7 +39,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <img src="/logo_cropped.png" alt="Cinephile" className="w-10 h-10 drop-shadow-md" />
+              <img src="/logo_cropped.png" alt="Cinephile" loading="lazy" decoding="async" className="w-10 h-10 drop-shadow-md" />
               <span className="text-2xl font-heading font-bold text-white tracking-tight">Cinephile</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">

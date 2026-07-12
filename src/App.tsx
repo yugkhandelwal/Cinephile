@@ -73,6 +73,10 @@ const AnimatedRoutes = () => {
         <Route path="/tv-shows" element={<PageTransition><RouteErrorBoundary routeName="TV Shows"><TVShows /></RouteErrorBoundary></PageTransition>} />
         <Route path="/watchlist" element={<PageTransition><RouteErrorBoundary routeName="Watchlist"><Watchlist /></RouteErrorBoundary></PageTransition>} />
         <Route path="/search" element={<PageTransition><RouteErrorBoundary routeName="Search"><Search /></RouteErrorBoundary></PageTransition>} />
+        {/* Semantic SEO Routes for Media */}
+        <Route path="/movie/:id" element={<PageTransition><RouteErrorBoundary routeName="Movie"><Title typeOverride="movie" /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/tv/:id" element={<PageTransition><RouteErrorBoundary routeName="TV Show"><Title typeOverride="tv" /></RouteErrorBoundary></PageTransition>} />
+        {/* Legacy Route */}
         <Route path="/title/:type/:id" element={<PageTransition><RouteErrorBoundary routeName="Title"><Title /></RouteErrorBoundary></PageTransition>} />
         <Route path="/play/:type/:id" element={<PageTransition><RouteErrorBoundary routeName="Player"><Player /></RouteErrorBoundary></PageTransition>} />
         <Route path="/auth" element={<PageTransition><RouteErrorBoundary routeName="Auth"><Auth /></RouteErrorBoundary></PageTransition>} />

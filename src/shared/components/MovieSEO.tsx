@@ -12,6 +12,7 @@ interface MovieSEOProps {
   duration?: number;
   tmdbId: number;
   type?: 'movie' | 'tv';
+  slug?: string;
 }
 
 export const MovieSEO = ({
@@ -26,47 +27,93 @@ export const MovieSEO = ({
   duration,
   tmdbId,
   type = 'movie',
+  slug,
 }: MovieSEOProps) => {
   const year = releaseDate ? new Date(releaseDate).getFullYear() : '';
-  const fullTitle = `${title}${year ? ` (${year})` : ''} - ${type === 'movie' ? 'Movie' : 'TV Show'} Info | Cinephile`;
-  const pageUrl = `https://cinephile.app/title/${type}/${tmdbId}`;
+  const fullTitle = `${title}${year ? ` (${year})` : ''} - ${type === 'movie' ? 'Movie' : 'TV Show'} | Cinephile`;
+  
+  // Generate SEO-friendly slug if not provided
+  const generatedSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  const typePath = type === 'movie' ? 'movie' : 'tv';
+  const pageUrl = `https://cinephile.app/${typePath}/${tmdbId}-${generatedSlug}`;
   
   // Structured Data (JSON-LD) for Google
-  const structuredData = {
+  const structuredData: any = {
     '@context': 'https://schema.org',
     '@type': type === 'movie' ? 'Movie' : 'TVSeries',
     name: title,
     description,
     image: posterUrl,
     datePublished: releaseDate,
-    aggregateRating: {
+    genre: genres,
+    url: pageUrl,
+  };
+
+  // Only include AggregateRating if rating > 0
+  if (rating > 0) {
+    structuredData.aggregateRating = {
       '@type': 'AggregateRating',
       ratingValue: rating,
       bestRating: 10,
       worstRating: 0,
-    },
-    genre: genres,
-    ...(director && { director: { '@type': 'Person', name: director } }),
-    ...(cast.length > 0 && {
-      actor: cast.map(name => ({ '@type': 'Person', name })),
-    }),
-    ...(duration && { duration: `PT${duration}M` }),
-    url: pageUrl,
+      ratingCount: 1, // TMDB doesn't give us exact count easily in this component, minimum 1 to be valid
+    };
+  }
+
+  if (director) {
+    structuredData.director = { '@type': 'Person', name: director };
+  }
+
+  if (cast.length > 0) {
+    structuredData.actor = cast.map(name => ({ '@type': 'Person', name }));
+  }
+
+  if (duration) {
+    structuredData.duration = `PT${duration}M`;
+  }
+
+  // Breadcrumb Schema
+  const breadcrumbData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://cinephile.app/'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: type === 'movie' ? 'Movies' : 'TV Shows',
+        item: `https://cinephile.app/${typePath}s`
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: title,
+        item: pageUrl
+      }
+    ]
   };
+
+  const jsonLdData = [structuredData, breadcrumbData];
 
   return (
     <Helmet>
       {/* Basic Meta */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
-      <meta name="keywords" content={`${title}, ${genres.join(', ')}, ${type}, ${type === 'movie' ? 'film' : 'tv series'}`} />
+      <meta name="keywords" content={`${title}, ${genres.join(', ')}, ${type}, ${type === 'movie' ? 'film' : 'tv series'}, watch ${title}`} />
       
       {/* Open Graph */}
       <meta property="og:type" content={type === 'movie' ? 'video.movie' : 'video.tv_show'} />
-      <meta property="og:title" content={title} />
+      <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={posterUrl} />
       <meta property="og:url" content={pageUrl} />
+      <meta property="og:site_name" content="Cinephile" />
       
       {/* Movie/TV-specific OG tags */}
       <meta property="video:release_date" content={releaseDate} />
@@ -77,16 +124,17 @@ export const MovieSEO = ({
       
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
+      <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={posterUrl} />
+      <meta name="twitter:site" content="@cinephile" />
       
       {/* Canonical */}
       <link rel="canonical" href={pageUrl} />
       
       {/* Structured Data */}
       <script type="application/ld+json">
-        {JSON.stringify(structuredData)}
+        {JSON.stringify(jsonLdData)}
       </script>
     </Helmet>
   );

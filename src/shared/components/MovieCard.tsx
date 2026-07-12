@@ -123,7 +123,9 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
 
   const handleClick = () => {
     if (id) {
-      navigate(`/title/${mediaType}/${id}`);
+      import('@/shared/lib/utils').then(({ generateSeoUrl }) => {
+        navigate(generateSeoUrl(mediaType, id, title));
+      });
     }
   };
 
