@@ -13,6 +13,7 @@ export interface UIMediaItem {
   imageUrl: string;
   backdropUrl?: string;
   description?: string;
+  popularity?: number;
 }
 
 function map(items: TmdbMovie[]): UIMediaItem[] {
@@ -25,6 +26,7 @@ function map(items: TmdbMovie[]): UIMediaItem[] {
     imageUrl: toPoster(m.poster_path),
     backdropUrl: m.backdrop_path ? `https://image.tmdb.org/t/p/original${m.backdrop_path}` : undefined,
     description: m.overview,
+    popularity: m.popularity,
   }));
 }
 
@@ -78,7 +80,7 @@ export function useGenres(kind: "movie" | "tv") {
   });
 }
 
-export function useDiscover(kind: "movie" | "tv", opts: { page?: number; sortBy?: string; withGenres?: number[] }) {
+export function useDiscover(kind: "movie" | "tv", opts: { page?: number; sortBy?: string; withGenres?: number[]; withWatchProviders?: string; watchRegion?: string }) {
   return useQuery({
     queryKey: ["tmdb", "discover", kind, opts],
     queryFn: async () =>
@@ -88,7 +90,9 @@ export function useDiscover(kind: "movie" | "tv", opts: { page?: number; sortBy?
             page: opts.page ?? 1,
             sort_by: opts.sortBy ?? "popularity.desc",
             with_genres: (opts.withGenres ?? []).join(","),
-          })
+            ...(opts.withWatchProviders ? { with_watch_providers: opts.withWatchProviders } : {}),
+            ...(opts.watchRegion ? { watch_region: opts.watchRegion } : {}),
+          } as any)
         ).results,
       ),
   });

@@ -1,6 +1,7 @@
 import { Button } from "@/shared/components/ui/button";
-import { Info } from "lucide-react";
+import { Info, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { generateSeoUrl } from "@/shared/lib/utils";
 import { useTrendingMovies, useDetails } from "@/shared/api/tmdb/hooks";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
@@ -92,7 +93,7 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
           <div className="flex flex-row gap-3 w-full sm:w-auto mt-2">
             <Button 
               size="lg" 
-              onClick={() => navigate(`/title/movie/${featured.id}`)}
+              onClick={() => navigate(generateSeoUrl('movie', featured.id, featured.title))}
               className="flex-1 sm:flex-none bg-white text-black hover:bg-white/90 rounded-full px-4 sm:px-8 h-12 gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all text-sm font-bold"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -101,7 +102,7 @@ const HeroSlide = ({ featured }: { featured: UIMediaItem }) => {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => navigate(`/title/movie/${featured.id}`)}
+              onClick={() => navigate(generateSeoUrl('movie', featured.id, featured.title))}
               className="flex-1 sm:flex-none rounded-full px-4 sm:px-8 h-12 gap-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:border-white/30 backdrop-blur-md active:scale-95 transition-all text-sm font-semibold"
             >
               <Info className="w-5 h-5" />

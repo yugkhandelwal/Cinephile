@@ -1,6 +1,7 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Hero from "./Hero";
 import ContentSection from "./ContentSection";
+import AvailableOnPlatform from "./AvailableOnPlatform";
 import MovieCard from "@/shared/components/MovieCard";
 import Footer from "@/shared/components/layout/Footer";
 import { useTrendingMovies, useTrendingTV, useNowPlayingMovies, useUpcomingMovies } from "@/shared/api/tmdb/hooks";
@@ -170,6 +171,8 @@ const Index = () => {
           </ContentSection>
         ) : null}
       </SectionErrorBoundary>
+
+      <AvailableOnPlatform />
 
       {/* New Releases Section */}
       <SectionErrorBoundary>

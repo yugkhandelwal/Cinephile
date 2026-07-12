@@ -188,7 +188,7 @@ const Auth = () => {
             <div className="flex gap-6 pr-6">
               {trendingMovies.map((movie, i) => (
                 <div key={`row1-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -196,7 +196,7 @@ const Auth = () => {
             <div className="flex gap-6 pr-6">
               {trendingMovies.map((movie, i) => (
                 <div key={`row1-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -210,14 +210,14 @@ const Auth = () => {
             <div className="flex gap-6 pr-6">
               {trendingMovies.map((movie, i) => (
                 <div key={`row2-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
             <div className="flex gap-6 pr-6">
               {trendingMovies.map((movie, i) => (
                 <div key={`row2-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -231,14 +231,14 @@ const Auth = () => {
             <div className="flex gap-6 pr-6">
               {trendingMovies.map((movie, i) => (
                 <div key={`row3-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
             <div className="flex gap-6 pr-6">
               {trendingMovies.map((movie, i) => (
                 <div key={`row3-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>

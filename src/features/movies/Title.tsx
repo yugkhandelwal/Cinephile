@@ -21,6 +21,7 @@ import ReactPlayer from "react-player";
 import { useWatchHistory } from "@/shared/hooks/useWatchHistory";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVibrant } from "@/shared/hooks/useVibrant";
+import { MovieSEO } from "@/shared/components/MovieSEO";
 
 const getDirectProviderLink = (providerName: string, title: string, fallbackLink: string = '#') => {
   if (!title) return fallbackLink;
@@ -45,7 +46,7 @@ const getDirectProviderLink = (providerName: string, title: string, fallbackLink
   return fallbackLink;
 };
 
-const TitlePage = () => {
+const TitlePage = ({ typeOverride }: { typeOverride?: "movie" | "tv" }) => {
   const navigate = useNavigate();
   const playerRef = useRef<HTMLIFrameElement>(null);
   const [isMuted, setIsMuted] = useState(true);
@@ -110,13 +111,17 @@ const TitlePage = () => {
 
   const { type, id } = useParams();
   
+  // Extract actual numeric ID if slug is present (e.g., '123-slug' -> '123')
+  const actualId = id?.split('-')[0];
+  const slug = id?.includes('-') ? id.split('-').slice(1).join('-') : undefined;
+
   useEffect(() => {
     window.scrollTo(0, 0);
     setIsVideoLoaded(false);
-  }, [id]);
+  }, [actualId]);
 
-  const kind = (type === "tv" ? "tv" : "movie") as "movie" | "tv";
-  const { data, isLoading, isError, error } = useDetails(kind, id);
+  const kind = typeOverride || ((type === "tv" ? "tv" : "movie") as "movie" | "tv");
+  const { data, isLoading, isError, error } = useDetails(kind, actualId);
   const { user } = useAuth();
   const [liking, setLiking] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -133,7 +138,7 @@ const TitlePage = () => {
     staleTime: 60000 
   });
   
-  const isSaved = watchlist?.some(w => w.media_id === Number(id)) || false;
+  const isSaved = watchlist?.some(w => w.media_id === Number(actualId)) || false;
   
   useEffect(() => {
     return () => {
@@ -149,9 +154,9 @@ const TitlePage = () => {
   const { addToHistory } = useWatchHistory();
 
   useEffect(() => {
-    if (d && id) {
+    if (d && actualId) {
       addToHistory({
-        id: Number(id),
+        id: Number(actualId),
         mediaType: kind,
         title: d.title || d.name || '',
         year: (d.release_date || d.first_air_date || '').slice(0, 4),
@@ -159,22 +164,22 @@ const TitlePage = () => {
         imageUrl: toPoster(d.poster_path)
       });
     }
-  }, [d, id, kind, addToHistory]); // Include full dependencies
+  }, [d, actualId, kind, addToHistory]); // Include full dependencies
 
   const handleAddWatchlist = async () => {
-    if (!d || !id || saving) return;
+    if (!d || !actualId || saving) return;
     
     setSaving(true);
     try {
       if (isSaved) {
-        await removeFromWatchlist(Number(id));
+        await removeFromWatchlist(Number(actualId));
         toast({
-          title: "Removed from Watchlist",
-          description: `${d.title || d.name} has been removed.`,
+          title: "Removed",
+          description: `${d.title || d.name} has been removed from your watchlist.`,
         });
       } else {
-        await addToWatchlist({
-          media_id: Number(id),
+        await addToWatchlist({ 
+          media_id: Number(actualId),
           media_type: kind,
           title: d.title || d.name || '',
           year: (d.release_date || d.first_air_date || '').slice(0, 4),
@@ -199,11 +204,11 @@ const TitlePage = () => {
   };
 
   const handleLike = async () => {
-    if (!d || !id || liking) return;
+    if (!d || !actualId || liking) return;
     
     setLiking(true);
     try {
-      await setLike(Number(id), kind, true, d.title || d.name || '');
+      await setLike(Number(actualId), kind, true, d.title || d.name || '');
       setLiked(true);
       toast({
         title: "Liked",
@@ -281,6 +286,20 @@ const TitlePage = () => {
         )}
         {d && (
           <>
+            <MovieSEO
+              title={d.title || d.name || 'Title'}
+              description={d.overview || 'Description not available.'}
+              posterUrl={toPoster(d.poster_path)}
+              releaseDate={d.release_date || d.first_air_date || ''}
+              rating={d.vote_average || 0}
+              genres={d.genres?.map((g: any) => g.name) || []}
+              director={d.credits?.crew?.find((c: any) => c.job === 'Director')?.name}
+              cast={d.credits?.cast?.slice(0, 5).map((c: any) => c.name) || []}
+              duration={d.runtime || d.episode_run_time?.[0]}
+              tmdbId={d.id}
+              type={kind}
+              slug={slug}
+            />
             {/* Cinematic Hero Section */}
             <div className="relative w-full h-[70vh] md:h-[85vh] min-h-[500px] md:min-h-[600px] overflow-hidden bg-black group">
               {/* Back Button */}
@@ -319,7 +338,7 @@ const TitlePage = () => {
                             setTimeout(() => setIsVideoLoaded(true), 1500);
                           }}
                           className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2 opacity-70 pointer-events-none"
-                          src={`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&disablekb=1&iv_load_policy=3&loop=1&playlist=${trailer.key}`}
+                          src={`https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&disablekb=1&iv_load_policy=3&cc_load_policy=3&loop=1&playlist=${trailer.key}`}
                           title="Trailer"
                           allow="autoplay; encrypted-media"
                           tabIndex={-1}
@@ -552,7 +571,7 @@ const TitlePage = () => {
               {/* Episodes Tab */}
               {activeTab === "episodes" && kind === "tv" && d.seasons && d.seasons.length > 0 && (
                 <div className="px-4 sm:px-6 md:px-16 lg:px-24 max-w-5xl animate-in fade-in slide-in-from-bottom-4">
-                  <SeasonsTab tvId={id} seasons={d.seasons || []} />
+                  <SeasonsTab tvId={actualId} seasons={d.seasons || []} />
                 </div>
               )}
 

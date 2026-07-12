@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { generateSeoUrl } from "@/shared/lib/utils";
 import { createPortal } from "react-dom";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -157,7 +158,7 @@ const Navbar = () => {
     { name: "Watchlist", path: "/watchlist", icon: BookmarkPlus },
   ];
 
-  const isTitlePage = location.pathname.startsWith('/title/');
+  const isTitlePage = location.pathname.startsWith('/title/') || location.pathname.startsWith('/movie/') || location.pathname.startsWith('/tv/');
 
   return (
     <>
@@ -224,6 +225,7 @@ const Navbar = () => {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label="Open search"
                     onClick={() => {
                       setSearchExpanded(true);
                       setTimeout(() => inputRef.current?.focus(), 100);
@@ -329,7 +331,8 @@ const Navbar = () => {
                                 e.preventDefault();
                                 const it = suggestions[activeIndex];
                                 saveRecentSearch(toTitle(it));
-                                navigate(`/title/${it.title ? 'movie' : 'tv'}/${it.id}`);
+                                const mediaType = it.title ? 'movie' : 'tv';
+                                navigate(generateSeoUrl(mediaType, it.id, it.title || it.name));
                                 setOpen(false);
                                 setSearchExpanded(false);
                                 setQuery("");
@@ -362,7 +365,8 @@ const Navbar = () => {
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => {
                                   saveRecentSearch(toTitle(s));
-                                  navigate(`/title/${s.title ? 'movie' : 'tv'}/${s.id}`);
+                                  const mediaType = s.title ? 'movie' : 'tv';
+                                  navigate(generateSeoUrl(mediaType, s.id, s.title || s.name));
                                   setOpen(false);
                                   setSearchExpanded(false);
                                   setQuery("");
@@ -464,6 +468,7 @@ const Navbar = () => {
                     }}
                     aria-expanded={userMenuOpen}
                     aria-haspopup="true"
+                    aria-label="User account menu"
                     className="flex items-center gap-2 group relative p-1 rounded-full hover:bg-accent/50 transition-all duration-200"
                   >
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold text-sm shadow-lg group-hover:scale-110 transition-all duration-200 ring-2 ring-primary/20 group-hover:ring-primary/40">
