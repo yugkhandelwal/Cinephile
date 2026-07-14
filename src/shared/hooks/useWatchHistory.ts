@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 export interface HistoryItem {
   id: number;
-  mediaType: "movie" | "tv";
+  mediaType: "movie" | "tv" | "anime";
   title: string;
   year?: string;
   rating?: number;
@@ -56,7 +56,7 @@ export function useWatchHistory() {
     localStorage.removeItem(HISTORY_KEY);
   }, []);
 
-  const removeFromHistory = useCallback((id: number, mediaType: "movie" | "tv") => {
+  const removeFromHistory = useCallback((id: number, mediaType: "movie" | "tv" | "anime") => {
     setHistory((prev) => {
       const newHistory = prev.filter(
         (h) => !(h.id === id && h.mediaType === mediaType)

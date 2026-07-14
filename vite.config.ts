@@ -1,17 +1,40 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { fileURLToPath } from "url";
-// Uncomment when vite-plugin-pwa is installed (npm install -D vite-plugin-pwa)
-// import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig({
-  server: {
-    host: "::",
-    port: 8080,
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+    server: {
+      host: "::",
+      port: 8080,
+      proxy: {
+        "/api/mal": {
+        target: "https://api.myanimelist.net/v2",
+        changeOrigin: true,
+        rewrite: (path) => {
+          // Extract endpoint from query param ?endpoint=/anime/ranking
+          const url = new URL(path, 'http://localhost');
+          const endpoint = url.searchParams.get('endpoint');
+          if (endpoint) {
+            url.searchParams.delete('endpoint');
+            return endpoint + (url.search ? url.search : '');
+          }
+          return path.replace(/^\/api\/mal/, "");
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            if (env.VITE_MAL_CLIENT_ID) {
+              proxyReq.setHeader('X-MAL-CLIENT-ID', env.VITE_MAL_CLIENT_ID);
+            }
+          });
+        }
+      },
+    },
   },
   plugins: [
     react(),
@@ -147,4 +170,5 @@ export default defineConfig({
       'lucide-react',
     ],
   },
+  };
 });

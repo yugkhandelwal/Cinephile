@@ -1,6 +1,6 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
-import MovieCard from "@/shared/components/MovieCard";
+import MediaCard from "@/shared/components/MediaCard";
 import { useTrendingTV, useGenres, useDiscover, useInfiniteDiscover, useInfiniteTrending } from "@/shared/api/tmdb/hooks";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -127,7 +127,7 @@ const TVShows = () => {
 
         <InfiniteGrid
           pages={discoverInf.data?.pages.map((p) => p.items)}
-          renderItem={(m) => <MovieCard key={`${m.mediaType}-${m.id}`} {...m} />}
+          renderItem={(m) => <MediaCard key={`${m.mediaType}-${m.id}`} {...m} />}
           isLoading={discoverInf.isLoading}
           isError={!!discoverInf.isError}
           fetchNextPage={discoverInf.fetchNextPage}
@@ -147,7 +147,7 @@ const TVShows = () => {
           title="Trending TV Series"
           subtitle="Streaming Universe"
           pages={trendingInf.data?.pages.map((p) => p.items)}
-          renderItem={(m) => <MovieCard key={`${m.mediaType}-${m.id}`} {...m} />}
+          renderItem={(m) => <MediaCard key={`${m.mediaType}-${m.id}`} {...m} />}
           isLoading={trendingInf.isLoading}
           isError={!!trendingInf.isError}
           fetchNextPage={trendingInf.fetchNextPage}

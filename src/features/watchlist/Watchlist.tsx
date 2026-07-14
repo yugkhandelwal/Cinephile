@@ -1,6 +1,6 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
-import MovieCard from "@/shared/components/MovieCard";
+import MediaCard from "@/shared/components/MediaCard";
 import { BookmarkPlus, Loader2, Search, ArrowDownAZ, Star, Calendar } from "lucide-react";
 import { getWatchlist } from "@/shared/api/supabase/watchlist";
 import { useAuth } from "@/context/AuthProvider";
@@ -16,7 +16,7 @@ const Watchlist = () => {
   const { user } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [mediaFilter, setMediaFilter] = useState<"all" | "movie" | "tv">("all");
+  const [mediaFilter, setMediaFilter] = useState<"all" | "movie" | "tv" | "anime">("all");
   const [sortBy, setSortBy] = useState<"date" | "rating" | "title">("date");
   
   const { data: items, error, isLoading } = useQuery({
@@ -100,7 +100,7 @@ const Watchlist = () => {
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-400">Type:</span>
                 <div className="flex bg-white/5 rounded-lg p-1">
-                  {["all", "movie", "tv"].map((type) => (
+                  {["all", "movie", "tv", "anime"].map((type) => (
                     <button
                       key={type}
                       onClick={() => setMediaFilter(type as any)}
@@ -110,7 +110,7 @@ const Watchlist = () => {
                           : "text-gray-400 hover:text-gray-200"
                       }`}
                     >
-                      {type === "all" ? "All" : type === "movie" ? "Movies" : "TV Shows"}
+                      {type === "all" ? "All" : type === "movie" ? "Movies" : type === "tv" ? "TV Shows" : "Anime"}
                     </button>
                   ))}
                 </div>
@@ -172,7 +172,7 @@ const Watchlist = () => {
                   transition={{ duration: 0.4, delay: i * 0.05 }}
                   className="relative group"
                 >
-                  <MovieCard
+                  <MediaCard
                     id={item.media_id}
                     mediaType={item.media_type}
                     title={item.title}

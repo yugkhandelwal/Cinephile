@@ -6,7 +6,10 @@ import { signInSchema, signUpSchema } from "@/shared/lib/validation";
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Mail, Lock, Sparkles, TrendingUp } from "lucide-react";
 import { z } from "zod";
 import { useTrendingMovies } from "@/shared/api/tmdb/hooks";
+import { useMalTopAnime } from "@/shared/api/mal/hooks";
+import { useContentMode } from "@/context/ContentModeProvider";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -19,8 +22,19 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Fetch trending movies for background
-  const { data: trendingMovies } = useTrendingMovies(1);
+  const { mode } = useContentMode();
+  const { data: moviesData } = useTrendingMovies(1);
+  const { data: animeData } = useMalTopAnime("bypopularity");
+
+  const displayMedia = useMemo(() => {
+    if (mode === "anime") {
+      if (!animeData?.pages?.[0]?.data) return [];
+      return animeData.pages[0].data.slice(0, 15);
+    } else {
+      if (!moviesData) return [];
+      return moviesData.slice(0, 15);
+    }
+  }, [mode, moviesData, animeData]);
 
   // Force hot reload indicator
   useEffect(() => {
@@ -177,7 +191,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col animate-fade-in relative">
       {/* Poster Wall Background */}
-      {trendingMovies && trendingMovies.length > 0 && (
+      {displayMedia && displayMedia.length > 0 && (
         <div className="absolute inset-0 z-0 overflow-hidden select-none pointer-events-none flex flex-col justify-center gap-6 rotate-[-6deg] scale-125 origin-center">
           <motion.div 
             className="flex w-max"
@@ -186,17 +200,17 @@ const Auth = () => {
           >
             {/* First Set */}
             <div className="flex gap-6 pr-6">
-              {trendingMovies.map((movie, i) => (
-                <div key={`row1-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              {displayMedia.map((media, i) => (
+                <div key={`row1-a-${media.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={media.imageUrl} alt={`${media.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
             {/* Duplicate Set for Seamless Loop */}
             <div className="flex gap-6 pr-6">
-              {trendingMovies.map((movie, i) => (
-                <div key={`row1-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              {displayMedia.map((media, i) => (
+                <div key={`row1-b-${media.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={media.imageUrl} alt={`${media.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -208,16 +222,16 @@ const Auth = () => {
             transition={{ repeat: Infinity, ease: "linear", duration: 70 }}
           >
             <div className="flex gap-6 pr-6">
-              {trendingMovies.map((movie, i) => (
-                <div key={`row2-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              {displayMedia.map((media, i) => (
+                <div key={`row2-a-${media.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={media.imageUrl} alt={`${media.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
             <div className="flex gap-6 pr-6">
-              {trendingMovies.map((movie, i) => (
-                <div key={`row2-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              {displayMedia.map((media, i) => (
+                <div key={`row2-b-${media.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={media.imageUrl} alt={`${media.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -229,16 +243,16 @@ const Auth = () => {
             transition={{ repeat: Infinity, ease: "linear", duration: 90 }}
           >
             <div className="flex gap-6 pr-6">
-              {trendingMovies.map((movie, i) => (
-                <div key={`row3-a-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              {displayMedia.map((media, i) => (
+                <div key={`row3-a-${media.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={media.imageUrl} alt={`${media.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
             <div className="flex gap-6 pr-6">
-              {trendingMovies.map((movie, i) => (
-                <div key={`row3-b-${movie.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
-                  <img src={movie.imageUrl} alt={`${movie.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              {displayMedia.map((media, i) => (
+                <div key={`row3-b-${media.id}-${i}`} className="w-40 sm:w-48 lg:w-56 aspect-[2/3] flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                  <img src={media.imageUrl} alt={`${media.title} poster`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>

@@ -1,7 +1,7 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
 import ContentSection from "../home/ContentSection";
-import MovieCard from "@/shared/components/MovieCard";
+import MediaCard from "@/shared/components/MediaCard";
 import { useTrendingMovies, useGenres, useDiscover, useInfiniteDiscover, useInfiniteTrending } from "@/shared/api/tmdb/hooks";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -134,7 +134,7 @@ const Movies = () => {
         <div className="container mx-auto px-4">
           <InfiniteGrid
             pages={discoverInf.data?.pages.map((p) => p.items)}
-            renderItem={(m) => <MovieCard key={`${m.mediaType}-${m.id}`} {...m} />}
+            renderItem={(m) => <MediaCard key={`${m.mediaType}-${m.id}`} {...m} />}
             isLoading={discoverInf.isLoading}
             isError={!!discoverInf.isError}
             fetchNextPage={discoverInf.fetchNextPage}

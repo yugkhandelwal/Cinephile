@@ -5,7 +5,7 @@ export type WatchlistItem = {
   id: string;
   user_id: string;
   media_id: number;
-  media_type: "movie" | "tv";
+  media_type: "movie" | "tv" | "anime";
   title: string;
   year: string;
   rating: number;

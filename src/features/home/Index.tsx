@@ -2,9 +2,10 @@ import Navbar from "@/shared/components/layout/Navbar";
 import Hero from "./Hero";
 import ContentSection from "./ContentSection";
 import AvailableOnPlatform from "./AvailableOnPlatform";
-import MovieCard from "@/shared/components/MovieCard";
+import MediaCard from "@/shared/components/MediaCard";
 import Footer from "@/shared/components/layout/Footer";
-import { useTrendingMovies, useTrendingTV, useNowPlayingMovies, useUpcomingMovies } from "@/shared/api/tmdb/hooks";
+import { useTrendingMovies, useTrendingTV, useNowPlayingMovies, useUpcomingMovies, useOnTheAirTV, useRecommendationsFromWatchlist } from "@/shared/api/tmdb/hooks";
+import { useAuth } from "@/context/AuthProvider";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { useWatchHistory } from "@/shared/hooks/useWatchHistory";
 import { useMemo } from "react";
@@ -23,6 +24,10 @@ const Index = () => {
   
   const { data: nowPlayingMovies, isLoading: nowPlayingLoading } = useNowPlayingMovies();
   const { data: upcomingMovies, isLoading: upcomingLoading } = useUpcomingMovies();
+  const { data: onAirTv, isLoading: onAirTvLoading } = useOnTheAirTV();
+  
+  const { user } = useAuth();
+  const { data: recs, isLoading: recsLoading } = useRecommendationsFromWatchlist();
 
   const top10Today = useMemo(() => {
     if (!trendingMovies || !trendingSeries) return [];
@@ -101,7 +106,7 @@ const Index = () => {
                   {index + 1}
                 </span>
                 <div className="relative z-10 w-[80%] sm:w-[75%] md:w-[80%] ml-auto shadow-[[-10px_0_20px_rgba(0,0,0,0.5)]]">
-                  <MovieCard 
+                  <MediaCard 
                     {...item}
                   />
                 </div>
@@ -112,14 +117,14 @@ const Index = () => {
       </SectionErrorBoundary>
 
       {/* Continue Watching / History */}
-      {history.length > 0 && (
+      {history.filter(h => h.mediaType !== 'anime').length > 0 && (
         <SectionErrorBoundary>
           <ContentSection
             title="Continue Watching"
             subtitle="Pick up where you left off"
           >
-            {history.map((item) => (
-              <MovieCard 
+            {history.filter(h => h.mediaType !== 'anime').map((item) => (
+              <MediaCard 
                 key={`history-${item.mediaType}-${item.id}`} 
                 id={item.id}
                 title={item.title}
@@ -162,11 +167,70 @@ const Index = () => {
             subtitle="The most popular movies and shows, updated daily."
           >
             {hotContent.map((item) => (
-              <MovieCard 
+              <MediaCard 
                 key={`hot-${item.mediaType}-${item.id}`} 
                 {...item}
                 tag={item.rating >= 8 ? "HOT" : undefined}
               />
+            ))}
+          </ContentSection>
+        ) : null}
+      </SectionErrorBoundary>
+
+      {/* Recommended For You */}
+      {user && (
+        <SectionErrorBoundary>
+          {recsLoading ? (
+            <ContentSection title="Recommended For You" subtitle="Based on your watchlist">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="w-full">
+                  <Skeleton className="w-full aspect-[2/3] rounded-xl" />
+                </div>
+              ))}
+            </ContentSection>
+          ) : recs && recs.length > 0 ? (
+            <ContentSection title="Recommended For You" subtitle="Based on your watchlist">
+              {recs.slice(0, 12).map((item) => (
+                <MediaCard key={`rec-${item.mediaType}-${item.id}`} {...item} />
+              ))}
+            </ContentSection>
+          ) : null}
+        </SectionErrorBoundary>
+      )}
+
+      {/* Upcoming Movies Section */}
+      <SectionErrorBoundary>
+        {upcomingLoading ? (
+          <ContentSection title="Coming Soon" subtitle="Upcoming movies hitting theaters">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="w-full">
+                <Skeleton className="w-full aspect-[2/3] rounded-xl" />
+              </div>
+            ))}
+          </ContentSection>
+        ) : upcomingMovies && upcomingMovies.length > 0 ? (
+          <ContentSection title="Coming Soon" subtitle="Upcoming movies hitting theaters">
+            {upcomingMovies.map((movie) => (
+              <MediaCard key={`upcoming-${movie.mediaType}-${movie.id}`} {...movie} tag="SOON" />
+            ))}
+          </ContentSection>
+        ) : null}
+      </SectionErrorBoundary>
+
+      {/* On The Air TV Section */}
+      <SectionErrorBoundary>
+        {onAirTvLoading ? (
+          <ContentSection title="On The Air" subtitle="TV series with new episodes">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="w-full">
+                <Skeleton className="w-full aspect-[2/3] rounded-xl" />
+              </div>
+            ))}
+          </ContentSection>
+        ) : onAirTv && onAirTv.length > 0 ? (
+          <ContentSection title="On The Air" subtitle="TV series with new episodes">
+            {onAirTv.map((show) => (
+              <MediaCard key={`onair-${show.mediaType}-${show.id}`} {...show} tag="NEW EP" />
             ))}
           </ContentSection>
         ) : null}
@@ -187,7 +251,7 @@ const Index = () => {
         ) : nowPlayingMovies && nowPlayingMovies.length > 0 ? (
           <ContentSection title="New Releases" subtitle="In theaters and streaming now">
             {nowPlayingMovies.map((movie) => (
-              <MovieCard key={`nowplaying-${movie.mediaType}-${movie.id}`} {...movie} tag="NEW" />
+              <MediaCard key={`nowplaying-${movie.mediaType}-${movie.id}`} {...movie} tag="NEW" />
             ))}
           </ContentSection>
         ) : null}
@@ -218,7 +282,7 @@ const Index = () => {
           onViewAll={() => navigate("/movies")}
         >
           {trendingMovies.map((movie) => (
-            <MovieCard key={`${movie.mediaType}-${movie.id}`} {...movie} />
+            <MediaCard key={`${movie.mediaType}-${movie.id}`} {...movie} />
           ))}
         </ContentSection>
         )}
@@ -248,7 +312,7 @@ const Index = () => {
           onViewAll={() => navigate("/tv-shows")}
         >
           {trendingSeries.map((show) => (
-            <MovieCard key={`${show.mediaType}-${show.id}`} {...show} />
+            <MediaCard key={`${show.mediaType}-${show.id}`} {...show} />
           ))}
         </ContentSection>
         )}

@@ -177,11 +177,15 @@ async function tmdbFetch<T>(path: string, params: Record<string, string | number
 }
 
 export function toPoster(urlPart: string | null): string {
-  return urlPart ? `${TMDB_IMAGE_BASE}${urlPart}` : "/placeholder.svg";
+  if (!urlPart) return "/placeholder.svg";
+  if (urlPart.startsWith("http")) return urlPart;
+  return `${TMDB_IMAGE_BASE}${urlPart}`;
 }
 
 export function toBackdrop(urlPart: string | null): string {
-  return urlPart ? `${TMDB_BACKDROP_BASE}${urlPart}` : "/placeholder.svg";
+  if (!urlPart) return "/placeholder.svg";
+  if (urlPart.startsWith("http")) return urlPart;
+  return `${TMDB_BACKDROP_BASE}${urlPart}`;
 }
 
 export function toTitle(item: TmdbMovie | TmdbSearchResult): string {

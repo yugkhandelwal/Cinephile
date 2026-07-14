@@ -8,11 +8,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Film, Search, X, User, LogOut, Settings, BookmarkPlus, ChevronDown, Home, Tv, Compass } from "lucide-react";
+import { Film, Search, X, User, LogOut, Settings, BookmarkPlus, ChevronDown, Home, Tv, Compass, Clapperboard, Sparkles } from "lucide-react";
 
+import { useContentMode } from "@/context/ContentModeProvider";
 import { useAuth } from "@/context/AuthProvider";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { tmdb, toPoster, toTitle, toYear } from "@/shared/api/tmdb/client";
+import { malClient } from "@/shared/api/mal/client";
 import { searchQuerySchema } from "@/shared/lib/validation";
 import { TmdbSearchResult } from "@/shared/api/tmdb/types";
 import { validateSearchQuery } from "@/shared/lib/inputSanitization";
@@ -50,6 +52,9 @@ const Navbar = () => {
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const userButtonRef = useRef<HTMLButtonElement | null>(null);
   const { user, loading, signOut } = useAuth();
+  const { mode, setMode } = useContentMode();
+  const [contentMenuOpen, setContentMenuOpen] = useState(false);
+  const contentMenuRef = useRef<HTMLDivElement | null>(null);
   
   const saveRecentSearch = (q: string) => {
     if (!q.trim()) return;
@@ -67,7 +72,8 @@ const Navbar = () => {
   }, [query]);
   // wire side effects for autosuggest
    
-  useNavbarEffects(query, setSuggestions, setOpen, boxRef, (fn) => setActiveIndex((i) => fn(i)), setSearchExpanded, setQuery, searchFilter);
+  const { mode: contentMode, setMode: setContentMode } = useContentMode();
+  useNavbarEffects(query, setSuggestions, setOpen, boxRef, (fn) => setActiveIndex((i) => fn(i)), setSearchExpanded, setQuery, searchFilter, contentMode);
   
   // Track scroll position for dynamic navbar
   useEffect(() => {
@@ -82,10 +88,14 @@ const Navbar = () => {
   // Close user menu dropdown when clicking outside
   useEffect(() => {
     function onDown(e: MouseEvent) {
-      const el = userMenuRef.current;
-      if (!el) return;
-      if (!el.contains(e.target as Node)) {
+      const userEl = userMenuRef.current;
+      const contentEl = contentMenuRef.current;
+      
+      if (userEl && !userEl.contains(e.target as Node)) {
         setUserMenuOpen(false);
+      }
+      if (contentEl && !contentEl.contains(e.target as Node)) {
+        setContentMenuOpen(false);
       }
     }
     window.addEventListener('mousedown', onDown);
@@ -109,6 +119,28 @@ const Navbar = () => {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+
+  // Global Shift+M listener for mode toggle
+  useEffect(() => {
+    const handleToggleMode = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      // Shift + M to toggle content mode
+      if (e.key === 'M' && e.shiftKey) {
+        e.preventDefault();
+        if (mode === 'movies') {
+          setMode('anime');
+          navigate('/anime');
+        } else {
+          setMode('movies');
+          navigate('/home');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleToggleMode);
+    return () => window.removeEventListener('keydown', handleToggleMode);
+  }, [mode, setMode, navigate]);
 
   // Focus trap for search modal
   useEffect(() => {
@@ -144,21 +176,38 @@ const Navbar = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [searchExpanded, suggestions, open, recentSearches]);
   
-  const navLinks = [
-    { name: "Home", path: "/", icon: Home },
+  const navLinks = mode === 'movies' ? [
+    { name: "Home", path: "/home", icon: Home },
     { name: "Browse", path: "/movies", icon: Compass },
     { name: "TV Shows", path: "/tv-shows", icon: Tv },
     { name: "Watchlist", path: "/watchlist", icon: BookmarkPlus },
-  ];
-
-  const mobileNavLinks = [
-    { name: "Home", path: "/", icon: Home },
-    { name: "Browse", path: "/movies", icon: Compass },
-    { name: "Search", path: "/search", icon: Search },
+  ] : [
+    { name: "Home", path: "/anime", icon: Home },
+    { name: "Browse", path: "/anime/browse", icon: Compass },
+    { name: "Seasonal", path: "/anime/seasonal", icon: Sparkles },
     { name: "Watchlist", path: "/watchlist", icon: BookmarkPlus },
   ];
 
-  const isTitlePage = location.pathname.startsWith('/title/') || location.pathname.startsWith('/movie/') || location.pathname.startsWith('/tv/');
+  const mobileNavLinks = mode === 'movies' ? [
+    { name: "Home", path: "/home", icon: Home },
+    { name: "Browse", path: "/movies", icon: Compass },
+    { name: "Search", path: "/search", icon: Search },
+    { name: "Watchlist", path: "/watchlist", icon: BookmarkPlus },
+  ] : [
+    { name: "Home", path: "/anime", icon: Home },
+    { name: "Browse", path: "/anime/browse", icon: Compass },
+    { name: "Search", path: "/anime/search", icon: Search },
+    { name: "Watchlist", path: "/watchlist", icon: BookmarkPlus },
+  ];
+
+  const isAnimeDetailsPage = location.pathname.startsWith('/anime/') && 
+    !location.pathname.startsWith('/anime/search') && 
+    !location.pathname.startsWith('/anime/browse') && 
+    !location.pathname.startsWith('/anime/seasonal');
+  const isTitlePage = location.pathname.startsWith('/title/') || 
+    location.pathname.startsWith('/movie/') || 
+    location.pathname.startsWith('/tv/') || 
+    isAnimeDetailsPage;
 
   return (
     <>
@@ -177,13 +226,15 @@ const Navbar = () => {
           <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-primary text-primary-foreground rounded px-3 py-1 z-50">Skip to content</a>
           
           {/* Logo - Left/Center */}
-          <div className="flex-1 flex items-center justify-center md:justify-start z-10">
-            <Link to="/" className="flex items-center gap-2 group relative translate-y-1">
+          <div className="flex-1 flex items-center justify-center md:justify-start z-10 gap-4">
+            <Link to={mode === 'anime' ? '/anime' : '/home'} className="flex items-center gap-2 group relative translate-y-1">
               <img src="/logo_cropped.png" alt="Cinephile" className="w-11 h-11 sm:w-12 sm:h-12 group-hover:scale-110 transition-transform duration-300 relative z-10 drop-shadow-lg" />
-              <span className={`hidden md:block font-heading font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-500 ${isScrolled ? 'text-2xl' : 'text-3xl'}`}>
+              <span className={`hidden lg:block font-heading font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-500 ${isScrolled ? 'text-2xl' : 'text-3xl'}`}>
                 Cinephile
               </span>
             </Link>
+
+
           </div>
 
           {/* Links - Center */}
@@ -251,9 +302,18 @@ const Navbar = () => {
                       onClick={(e) => e.stopPropagation()}
                       onSubmit={(e) => {
                         e.preventDefault();
-                        if (sanitizedQuery.trim()) {
-                          saveRecentSearch(sanitizedQuery);
-                          // Prevent navigation to generic search page on enter
+                        if (suggestions.length > 0) {
+                          const top = suggestions[0];
+                          saveRecentSearch(toTitle(top));
+                          if (top.media_type === 'anime') {
+                            navigate(`/anime/${top.id}`);
+                          } else {
+                            const mediaType = top.title ? 'movie' : 'tv';
+                            navigate(generateSeoUrl(mediaType, top.id, top.title || top.name));
+                          }
+                          setOpen(false);
+                          setSearchExpanded(false);
+                          setQuery("");
                         }
                       }}
                       className="w-full max-w-xl mx-4 flex flex-col gap-3 animate-in zoom-in-95 duration-200"
@@ -331,8 +391,12 @@ const Navbar = () => {
                                 e.preventDefault();
                                 const it = suggestions[activeIndex];
                                 saveRecentSearch(toTitle(it));
-                                const mediaType = it.title ? 'movie' : 'tv';
-                                navigate(generateSeoUrl(mediaType, it.id, it.title || it.name));
+                                if (it.media_type === 'anime') {
+                                  navigate(`/anime/${it.id}`);
+                                } else {
+                                  const mediaType = it.title ? 'movie' : 'tv';
+                                  navigate(generateSeoUrl(mediaType, it.id, it.title || it.name));
+                                }
                                 setOpen(false);
                                 setSearchExpanded(false);
                                 setQuery("");
@@ -365,8 +429,12 @@ const Navbar = () => {
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => {
                                   saveRecentSearch(toTitle(s));
-                                  const mediaType = s.title ? 'movie' : 'tv';
-                                  navigate(generateSeoUrl(mediaType, s.id, s.title || s.name));
+                                  if (s.media_type === 'anime') {
+                                    navigate(`/anime/${s.id}`);
+                                  } else {
+                                    const mediaType = s.title ? 'movie' : 'tv';
+                                    navigate(generateSeoUrl(mediaType, s.id, s.title || s.name));
+                                  }
                                   setOpen(false);
                                   setSearchExpanded(false);
                                   setQuery("");
@@ -389,7 +457,7 @@ const Navbar = () => {
                                   <div className="flex items-center gap-2 text-xs text-white/40 mt-1">
                                     <span>{toYear(s)}</span>
                                     <span className="w-1 h-1 rounded-full bg-white/20" />
-                                    <span>{s.title ? 'Movie' : 'TV Show'}</span>
+                                    <span>{s.media_type === 'anime' ? 'Anime' : (s.title ? 'Movie' : 'TV Show')}</span>
                                   </div>
                                 </div>
                               </button>
@@ -569,6 +637,27 @@ const Navbar = () => {
           {mobileNavLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.path;
+            
+            if (link.name === 'Search') {
+              return (
+                <button
+                  key={link.name}
+                  onClick={() => {
+                    setSearchExpanded(true);
+                    setTimeout(() => inputRef.current?.focus(), 100);
+                  }}
+                  className="flex-1 flex flex-col items-center justify-center gap-1 py-1 relative z-10 group"
+                >
+                  <div className={`relative flex items-center justify-center transition-transform duration-300 ${searchExpanded ? 'scale-110' : 'group-hover:scale-110'}`}>
+                    <Icon className={`w-6 h-6 transition-colors duration-300 ${searchExpanded ? 'text-primary' : 'text-gray-400 group-hover:text-gray-200'}`} />
+                  </div>
+                  <span className={`text-[10px] font-medium transition-colors duration-300 ${searchExpanded ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>
+                    {link.name}
+                  </span>
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={link.path}
@@ -620,7 +709,8 @@ function useNavbarEffects(
   setActiveIndex: (fn: (i: number) => number) => void,
   setSearchExpanded: (v: boolean) => void,
   setQuery: (v: string) => void,
-  searchFilter: 'multi' | 'movie' | 'tv'
+  searchFilter: 'multi' | 'movie' | 'tv',
+  contentMode: 'movies' | 'anime'
 ) {
   useEffect(() => {
     const ctrl = new AbortController();
@@ -638,15 +728,32 @@ function useNavbarEffects(
     
     const t = setTimeout(async () => {
       try {
-        let res;
-        if (searchFilter === 'movie') res = await tmdb.movies.search(validationResult.data, 1);
-        else if (searchFilter === 'tv') res = await tmdb.tv.search(validationResult.data, 1);
-        else res = await tmdb.multi.search(validationResult.data, 1);
+        let res: any;
+        let filtered: any[] = [];
+        if (contentMode === 'anime') {
+          res = await malClient.searchAnime(validationResult.data, 8, 0);
+          if (res && res.data) {
+            filtered = res.data.map((edge: any) => ({
+              id: edge.node.id,
+              media_type: 'anime',
+              title: edge.node.title,
+              poster_path: edge.node.main_picture?.medium,
+              release_date: edge.node.start_season?.year ? `${edge.node.start_season.year}-01-01` : undefined
+            }));
+          } else {
+            filtered = [];
+          }
+        } else {
+          if (searchFilter === 'movie') res = await tmdb.movies.search(validationResult.data, 1);
+          else if (searchFilter === 'tv') res = await tmdb.tv.search(validationResult.data, 1);
+          else res = await tmdb.multi.search(validationResult.data, 1);
 
-        let filtered = res.results;
-        if (searchFilter === 'multi') {
-          filtered = filtered.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv');
+          filtered = res.results;
+          if (searchFilter === 'multi') {
+            filtered = filtered.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv');
+          }
         }
+        
         setSuggestions(filtered.slice(0, 8));
         setActiveIndex(() => -1);
       } catch {
@@ -657,6 +764,6 @@ function useNavbarEffects(
       ctrl.abort();
       clearTimeout(t);
     };
-  }, [query, setSuggestions, setActiveIndex, searchFilter]);
+  }, [query, setSuggestions, setActiveIndex, searchFilter, contentMode]);
 
 }
