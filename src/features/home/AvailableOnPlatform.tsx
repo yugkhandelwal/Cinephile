@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useDiscover } from '@/shared/api/tmdb/hooks';
 import ContentSection from './ContentSection';
-import MovieCard from '@/shared/components/MovieCard';
+import MediaCard from '@/shared/components/MediaCard';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { SectionErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
@@ -87,7 +87,7 @@ const AvailableOnPlatform = () => {
             ))
           ) : (
             mixedContent.map(item => (
-              <MovieCard key={`${item.mediaType}-${item.id}`} {...item} />
+              <MediaCard key={`${item.mediaType}-${item.id}`} {...item} />
             ))
           )}
         </ContentSection>

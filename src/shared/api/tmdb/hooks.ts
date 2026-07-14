@@ -223,3 +223,48 @@ export function useInfiniteSearchMulti(query: string) {
     },
   });
 }
+
+export function useTmdbLogoByTitle(title: string | undefined) {
+  return useQuery({
+    queryKey: ["tmdb", "logo", title],
+    queryFn: async () => {
+      if (!title) return null;
+      // 1. Search TV shows
+      const searchRes = await tmdb.tv.search(title, 1);
+      const first = searchRes.results?.[0];
+      if (!first) return null;
+      
+      // 2. Fetch details for images
+      const details = await tmdb.tv.detailsWithExtras(first.id);
+      const logos = details.images?.logos;
+      if (!logos || logos.length === 0) return null;
+      
+      // Prefer English or Japanese logo
+      const prefLogo = logos.find((l: any) => l.iso_639_1 === 'en' || l.iso_639_1 === 'ja');
+      const finalLogo = prefLogo || logos[0];
+      
+      return finalLogo?.file_path ? `https://image.tmdb.org/t/p/w500${finalLogo.file_path}` : null;
+    },
+    enabled: !!title,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours cache
+  });
+}
+
+export function useTmdbDetailsByTitle(title: string | undefined) {
+  return useQuery({
+    queryKey: ["tmdb", "detailsByTitle", title],
+    queryFn: async () => {
+      if (!title) return null;
+      // 1. Search TV shows
+      const searchRes = await tmdb.tv.search(title, 1);
+      const first = searchRes.results?.[0];
+      if (!first) return null;
+      
+      // 2. Fetch full details including videos and images
+      const details = await tmdb.tv.detailsWithExtras(first.id);
+      return details;
+    },
+    enabled: !!title,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours cache
+  });
+}

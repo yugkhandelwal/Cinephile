@@ -1,6 +1,6 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
-import MovieCard from "@/shared/components/MovieCard";
+import MediaCard from "@/shared/components/MediaCard";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDetails, useSeason } from "@/shared/api/tmdb/hooks";
 import { toPoster, pickRegionProvider } from "@/shared/api/tmdb/client";
@@ -668,7 +668,7 @@ const TitlePage = ({ typeOverride }: { typeOverride?: "movie" | "tv" }) => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 px-4 sm:px-6 md:px-16 lg:px-24 max-w-7xl">
                       {data.recommendations.slice(0, 15).map((m) => (
                         <div key={`${m.mediaType}-${m.id}`} className="relative group">
-                          <MovieCard {...m} />
+                          <MediaCard {...m} />
                         </div>
                       ))}
                     </div>

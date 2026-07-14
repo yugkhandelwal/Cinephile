@@ -1,7 +1,7 @@
 import Navbar from "@/shared/components/layout/Navbar";
 import Footer from "@/shared/components/layout/Footer";
 import ContentSection from "../home/ContentSection";
-import MovieCard from "@/shared/components/MovieCard";
+import MediaCard from "@/shared/components/MediaCard";
 import { useAIRecommendations, useRecommendationsFromWatchlist } from "@/shared/api/tmdb/hooks";
 import { useAuth } from "@/context/AuthProvider";
 import { useEffect, useMemo, useState } from "react";
@@ -47,7 +47,7 @@ const Recommendations = () => {
                 <ContentSection title="AI Picks for You" subtitle="Based on your watchlist and likes">
                   {ai.data.items.map((m) => (
                     <div key={`${m.mediaType}-${m.id}`} className="space-y-1">
-                      <MovieCard {...m} />
+                      <MediaCard {...m} />
                       {ai.data.reasons?.[m.id!] && (
                         <div className="text-[11px] text-muted-foreground pl-1">
                           {ai.data.reasons[m.id!].slice(0,2).map((r, i) => (
@@ -68,7 +68,7 @@ const Recommendations = () => {
             {!!simple.data?.length && (
               <ContentSection title="Because you saved" subtitle="Movies and shows you might like">
                 {simple.data.map((m) => (
-                  <MovieCard key={`${m.mediaType}-${m.id}`} {...m} />
+                  <MediaCard key={`${m.mediaType}-${m.id}`} {...m} />
                 ))}
               </ContentSection>
             )}

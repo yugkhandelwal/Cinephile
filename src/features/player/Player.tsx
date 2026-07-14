@@ -56,6 +56,12 @@ const SERVERS: ServerInfo[] = [
     name: "Server 5",
     getMovieUrl: (id) => `https://vidcore.net/movie/${id}`,
     getTvUrl: (id, season, episode) => `https://vidcore.net/tv/${id}/${season}/${episode}`
+  },
+  {
+    id: "cinezo",
+    name: "Server 6",
+    getMovieUrl: (id) => `https://player.cinezo.live/embed/movie/${id}`,
+    getTvUrl: (id, season, episode) => `https://player.cinezo.live/embed/tv/${id}/${season}/${episode}`
   }
 ];
 

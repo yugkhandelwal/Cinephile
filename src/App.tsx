@@ -2,9 +2,12 @@ import { Toaster } from "@/shared/components/ui/toaster";
 import { Toaster as Sonner } from "@/shared/components/ui/sonner";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Suspense, lazy, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
+
+const Landing = lazy(() => import("./features/landing/Landing"));
 const Index = lazy(() => import("./features/home/Index"));
 const Movies = lazy(() => import("./features/movies/Movies"));
 const TVShows = lazy(() => import("./features/tv-shows/TVShows"));
@@ -14,9 +17,19 @@ const Search = lazy(() => import("./features/search/Search"));
 const Title = lazy(() => import("./features/movies/Title"));
 const Player = lazy(() => import("./features/player/Player"));
 const AccountSettings = lazy(() => import("./features/account/AccountSettings"));
+
+// Anime Routes
+const AnimeHome = lazy(() => import("./features/anime/home/AnimeHome"));
+const AnimeSearch = lazy(() => import("./features/anime/AnimeSearch"));
+const AnimeBrowse = lazy(() => import("./features/anime/AnimeBrowse"));
+const AnimeSeasonal = lazy(() => import("./features/anime/AnimeSeasonal"));
+const AnimeDetails = lazy(() => import("./features/anime/AnimeDetails"));
+const AnimePlayer = lazy(() => import("./features/anime/AnimePlayer"));
+
 import { AuthProvider } from "./context/AuthProvider";
 import { RatingsProvider } from "./context/RatingsProvider";
 import { SearchProvider } from "./context/SearchProvider";
+import { ContentModeProvider } from "./context/ContentModeProvider";
 import Auth from "./features/auth/Auth";
 import Recommendations from "./features/movies/Recommendations";
 import Analytics from "./shared/components/Analytics";
@@ -27,6 +40,8 @@ import { OfflineIndicator } from "./shared/components/OfflineIndicator";
 import { setupPersistentCache } from "./shared/lib/persistentCache";
 import { ScrollToTop } from "./shared/components/ScrollToTop";
 import Navbar from "@/shared/components/layout/Navbar";
+import { PageTransition } from "./shared/components/PageTransition";
+import { PullToRefresh } from "./shared/components/PullToRefresh";
 
 // Configure React Query with better defaults
 const queryClient = new QueryClient({
@@ -56,19 +71,23 @@ const GlobalLoader = () => (
   </div>
 );
 
-import { useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import { PageTransition } from "./shared/components/PageTransition";
-
-import { PullToRefresh } from "./shared/components/PullToRefresh";
-
 const AnimatedRoutes = () => {
   const location = useLocation();
   
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><RouteErrorBoundary routeName="Home"><Index /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/" element={<PageTransition><RouteErrorBoundary routeName="Landing"><Landing /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/home" element={<PageTransition><RouteErrorBoundary routeName="Home"><Index /></RouteErrorBoundary></PageTransition>} />
+        
+        {/* Flattened Anime Routes */}
+        <Route path="/anime" element={<PageTransition><RouteErrorBoundary routeName="Anime Home"><AnimeHome /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/anime/seasonal" element={<PageTransition><RouteErrorBoundary routeName="Anime Seasonal"><AnimeSeasonal /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/anime/search" element={<PageTransition><RouteErrorBoundary routeName="Anime Search"><AnimeSearch /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/anime/browse" element={<PageTransition><RouteErrorBoundary routeName="Anime Browse"><AnimeBrowse /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/anime/watch/:id" element={<PageTransition><RouteErrorBoundary routeName="Anime Player"><AnimePlayer /></RouteErrorBoundary></PageTransition>} />
+        <Route path="/anime/:id" element={<PageTransition><RouteErrorBoundary routeName="Anime Details"><AnimeDetails /></RouteErrorBoundary></PageTransition>} />
+        
         <Route path="/movies" element={<PageTransition><RouteErrorBoundary routeName="Movies"><Movies /></RouteErrorBoundary></PageTransition>} />
         <Route path="/tv-shows" element={<PageTransition><RouteErrorBoundary routeName="TV Shows"><TVShows /></RouteErrorBoundary></PageTransition>} />
         <Route path="/watchlist" element={<PageTransition><RouteErrorBoundary routeName="Watchlist"><Watchlist /></RouteErrorBoundary></PageTransition>} />
@@ -113,6 +132,7 @@ const App = () => {
           <Sonner />
           <AuthProvider>
             <RatingsProvider>
+              <ContentModeProvider>
               <BrowserRouter>
               <ErrorBoundary
                 onError={(error, errorInfo) => {
@@ -131,11 +151,12 @@ const App = () => {
                 </Suspense>
               </ErrorBoundary>
             </BrowserRouter>
-          </RatingsProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+            </ContentModeProvider>
+            </RatingsProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -10,9 +10,9 @@ import { usePrefetchDetails } from "@/shared/api/tmdb/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface MovieCardProps {
+interface MediaCardProps {
   id?: number;
-  mediaType?: "movie" | "tv";
+  mediaType?: "movie" | "tv" | "anime";
   title: string;
   year: string;
   rating: number;
@@ -21,7 +21,7 @@ interface MovieCardProps {
   onRemove?: () => void;
 }
 
-const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag, onRemove }: MovieCardProps) => {
+const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag, onRemove }: MediaCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const prefetchDetails = usePrefetchDetails();
@@ -48,10 +48,17 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
     };
   }, []);
   
-  // Prefetch movie/TV details on hover for faster navigation
+  // Prefetch details on hover for faster navigation
   const handlePrefetch = () => {
     if (id) {
-      prefetchDetails(mediaType, id);
+      if (mediaType === "anime") {
+        queryClient.prefetchQuery({
+          queryKey: ["mal", "details", id.toString()],
+          queryFn: () => import("@/shared/api/mal/client").then(m => m.malClient.getAnimeDetails(id))
+        });
+      } else {
+        prefetchDetails(mediaType, id);
+      }
     }
   };
 
@@ -123,9 +130,13 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
 
   const handleClick = () => {
     if (id) {
-      import('@/shared/lib/utils').then(({ generateSeoUrl }) => {
-        navigate(generateSeoUrl(mediaType, id, title));
-      });
+      if (mediaType === "anime") {
+        navigate(`/anime/${id}`);
+      } else {
+        import('@/shared/lib/utils').then(({ generateSeoUrl }) => {
+          navigate(generateSeoUrl(mediaType, id, title));
+        });
+      }
     }
   };
 
@@ -273,7 +284,7 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
           <span className="text-gray-600 font-bold">·</span>
           <span>{year || 'N/A'}</span>
           <span className="text-gray-600 font-bold">·</span>
-          <span className="capitalize">{mediaType === 'tv' ? 'TV Series' : 'Movie'}</span>
+          <span className="capitalize">{mediaType === 'tv' ? 'TV Series' : mediaType === 'anime' ? 'Anime' : 'Movie'}</span>
         </div>
       </div>
     </div>
@@ -282,7 +293,7 @@ const MovieCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
 
 // Memoize component to prevent unnecessary re-renders
 // Only re-render if props actually change
-export default memo(MovieCard, (prevProps, nextProps) => {
+export default memo(MediaCard, (prevProps, nextProps) => {
   return (
     prevProps.id === nextProps.id &&
     prevProps.mediaType === nextProps.mediaType &&
