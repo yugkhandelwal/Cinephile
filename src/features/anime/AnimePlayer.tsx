@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MonitorPlay, SkipBack, SkipForward, Settings2, Info, ListVideo, PlayCircle, Star, Tv } from "lucide-react";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { useMalDetails } from "@/shared/api/mal/hooks";
+import { useContinueWatching } from "@/shared/hooks/useContinueWatching";
 import { Switch } from "@/shared/components/ui/switch";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
@@ -46,11 +47,18 @@ const AnimePlayer = () => {
   
   const currentEpStr = searchParams.get("ep") || "1";
   const currentEp = parseInt(currentEpStr, 10);
+  const initialServer = searchParams.get("server") || SERVERS[0].id;
+  const initialAudio = (searchParams.get("audio") as "sub" | "dub") || "sub";
+  const initialTime = searchParams.get("t") || "0";
   
   const { data: anime, isLoading } = useMalDetails(id);
   
-  const [activeServer, setActiveServer] = useState(SERVERS[0].id);
-  const [audioType, setAudioType] = useState<"sub" | "dub">("sub");
+  const [activeServer, setActiveServer] = useState(
+    SERVERS.find(s => s.id === initialServer) ? initialServer : SERVERS[0].id
+  );
+  const [audioType, setAudioType] = useState<"sub" | "dub">(initialAudio);
+  const [currentTime, setCurrentTime] = useState(Number(initialTime));
+  const { saveProgress } = useContinueWatching();
   const [autoPlay, setAutoPlay] = useState(false);
   const [autoNext, setAutoNext] = useState(true);
   const [searchEp, setSearchEp] = useState("");
@@ -149,6 +157,37 @@ const AnimePlayer = () => {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [autoNext, currentEp, episodesCount, id, navigate]);
+
+  // Local timer for progress tracking
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Save progress every second for real-time sync
+  useEffect(() => {
+    if (!anime || currentTime === 0) return;
+    
+    // Estimate runtime (24 mins per episode average for anime if unknown)
+    const duration = anime.average_episode_duration ? anime.average_episode_duration : 24 * 60;
+    const progressPercentage = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
+
+    saveProgress({
+      mediaType: 'anime',
+      contentId: Number(id),
+      episodeNumber: currentEp,
+      serverId: activeServer,
+      audioLanguage: audioType,
+      currentTime,
+      duration,
+      progressPercentage,
+      title: anime.title,
+      posterUrl: anime.main_picture?.large || anime.main_picture?.medium,
+      backdropUrl: anime.main_picture?.large // MAL doesn't provide backdrops normally, fallback to main
+    });
+  }, [currentTime, id, currentEp, activeServer, audioType, anime, saveProgress]);
 
   const activeServerObj = SERVERS.find(s => s.id === activeServer) || SERVERS[0];
   const embedUrl = activeServerObj.getUrl(id || "", currentEp, audioType, autoPlay);

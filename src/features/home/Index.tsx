@@ -7,17 +7,16 @@ import Footer from "@/shared/components/layout/Footer";
 import { useTrendingMovies, useTrendingTV, useNowPlayingMovies, useUpcomingMovies, useOnTheAirTV, useRecommendationsFromWatchlist } from "@/shared/api/tmdb/hooks";
 import { useAuth } from "@/context/AuthProvider";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
-import { useWatchHistory } from "@/shared/hooks/useWatchHistory";
 import { useMemo } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SectionErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { SEO } from "@/shared/components/SEO";
 import { useNavigate } from "react-router-dom";
+import ContinueWatchingCarousel from "@/shared/components/ContinueWatchingCarousel";
 
 const Index = () => {
   const navigate = useNavigate();
   useDocumentTitle("Home");
-  const { history, removeFromHistory } = useWatchHistory();
 
   const { data: trendingMovies, isLoading: moviesLoading, isError: moviesError, error: moviesErr } = useTrendingMovies();
   const { data: trendingSeries, isLoading: tvLoading, isError: tvError, error: tvErr } = useTrendingTV();
@@ -116,28 +115,7 @@ const Index = () => {
         ) : null}
       </SectionErrorBoundary>
 
-      {/* Continue Watching / History */}
-      {history.filter(h => h.mediaType !== 'anime').length > 0 && (
-        <SectionErrorBoundary>
-          <ContentSection
-            title="Continue Watching"
-            subtitle="Pick up where you left off"
-          >
-            {history.filter(h => h.mediaType !== 'anime').map((item) => (
-              <MediaCard 
-                key={`history-${item.mediaType}-${item.id}`} 
-                id={item.id}
-                title={item.title}
-                mediaType={item.mediaType}
-                imageUrl={item.imageUrl || ''}
-                rating={item.rating || 0}
-                year={item.year}
-                onRemove={() => removeFromHistory(item.id, item.mediaType)}
-              />
-            ))}
-          </ContentSection>
-        </SectionErrorBoundary>
-      )}
+      <ContinueWatchingCarousel filter="movies_tv" />
 
       {/* What's Hot Right Now - Dynamic Trending Content */}
       <SectionErrorBoundary>

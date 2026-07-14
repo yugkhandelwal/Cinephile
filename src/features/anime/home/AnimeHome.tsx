@@ -1,5 +1,4 @@
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
-import { useWatchHistory } from "@/shared/hooks/useWatchHistory";
 import ContentSection from "@/features/home/ContentSection";
 import MediaCard from "@/shared/components/MediaCard";
 import Footer from "@/shared/components/layout/Footer";
@@ -8,13 +7,13 @@ import { SectionErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { SEO } from "@/shared/components/SEO";
 import { useMalTopAnime, useMalSeasonalAnime } from "@/shared/api/mal/hooks";
 import { useNavigate } from "react-router-dom";
+import ContinueWatchingCarousel from "@/shared/components/ContinueWatchingCarousel";
 
 import AnimeHero from "./AnimeHero";
 
 const AnimeHome = () => {
   useDocumentTitle("Anime Home");
   const navigate = useNavigate();
-  const { history, removeFromHistory } = useWatchHistory();
 
   const { data: topAnimeData, isLoading: loadingTop } = useMalTopAnime();
   const { data: topAiringData, isLoading: loadingAiring } = useMalTopAnime("airing");
@@ -49,29 +48,7 @@ const AnimeHome = () => {
       <div id="main" className="min-h-screen bg-background animate-fade-in pb-tabbar">
         
         <AnimeHero />
-
-        {/* Continue Watching / History */}
-        {history.filter(h => h.mediaType === 'anime').length > 0 && (
-          <SectionErrorBoundary>
-            <ContentSection
-              title="Continue Watching"
-              subtitle="Pick up where you left off"
-            >
-              {history.filter(h => h.mediaType === 'anime').map((item) => (
-                <MediaCard 
-                  key={`history-${item.mediaType}-${item.id}`} 
-                  id={item.id}
-                  title={item.title}
-                  mediaType={item.mediaType}
-                  imageUrl={item.imageUrl || ''}
-                  rating={item.rating || 0}
-                  year={item.year}
-                  onRemove={() => removeFromHistory(item.id, item.mediaType)}
-                />
-              ))}
-            </ContentSection>
-          </SectionErrorBoundary>
-        )}
+        <ContinueWatchingCarousel filter="anime" />
 
         {/* Seasonal Anime Section */}
         <SectionErrorBoundary>

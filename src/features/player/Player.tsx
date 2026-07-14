@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { X, MonitorPlay, ListVideo } from "lucide-react";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { useSeason, useDetails } from "@/shared/api/tmdb/hooks";
 import { generateSeoUrl } from "@/shared/lib/utils";
+import { useContinueWatching } from "@/shared/hooks/useContinueWatching";
 import {
   Sheet,
   SheetContent,
@@ -71,10 +72,17 @@ const Player = () => {
   const navigate = useNavigate();
   
   const actualId = id?.split('-')[0];
-  const season = searchParams.get("s") || "1";
-  const episode = searchParams.get("e") || "1";
+  const season = searchParams.get("s") || searchParams.get("season") || "1";
+  const episode = searchParams.get("e") || searchParams.get("ep") || "1";
+  const initialTime = searchParams.get("t") || "0";
+  const initialServer = searchParams.get("server") || SERVERS[0].id;
 
-  const [activeServer, setActiveServer] = useState<string>(SERVERS[0].id);
+  const [activeServer, setActiveServer] = useState<string>(
+    SERVERS.find(s => s.id === initialServer) ? initialServer : SERVERS[0].id
+  );
+  
+  const [currentTime, setCurrentTime] = useState(Number(initialTime));
+  const { saveProgress } = useContinueWatching();
   
   useDocumentTitle(`Playing ${type === "tv" ? `S${season} E${episode}` : "Movie"}`);
 
@@ -87,6 +95,56 @@ const Player = () => {
   // Fetch episodes for the current season if it's a TV show
   const { data: seasonData } = useSeason(type === "tv" ? actualId : undefined, type === "tv" ? Number(season) : undefined);
   const { data: tvDetails } = useDetails(type === "tv" ? "tv" : "movie", actualId);
+
+  // Timer to simulate progress tracking for iframes
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Save progress every second for real-time sync
+  useEffect(() => {
+    if (!tvDetails?.details || currentTime === 0) return;
+
+    const data = tvDetails.details;
+    const title = data.title || data.name;
+    const posterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : undefined;
+    const backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : undefined;
+    
+    // Estimate runtime
+    let runtimeMins = 0;
+    if (type === "movie" && data.runtime) {
+      runtimeMins = data.runtime;
+    } else if (type === "tv" && seasonData?.episodes) {
+      const epData = seasonData.episodes.find((e: any) => e.episode_number === Number(episode));
+      if (epData && epData.runtime) runtimeMins = epData.runtime;
+      else if (data.episode_run_time?.length) runtimeMins = data.episode_run_time[0];
+    }
+    
+    if (!runtimeMins || runtimeMins === 0) {
+      runtimeMins = type === "movie" ? 120 : 45;
+    }
+    
+    const duration = runtimeMins * 60;
+    const progressPercentage = Math.min(100, (currentTime / duration) * 100);
+
+    saveProgress({
+      mediaType: type as 'movie' | 'tv',
+      contentId: Number(actualId),
+      seasonNumber: type === 'tv' ? Number(season) : undefined,
+      episodeNumber: type === 'tv' ? Number(episode) : undefined,
+      serverId: activeServer,
+      currentTime,
+      duration,
+      progressPercentage,
+      title,
+      posterUrl,
+      backdropUrl
+    });
+  }, [currentTime, type, actualId, season, episode, activeServer, tvDetails, seasonData, saveProgress]);
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col justify-center md:block w-full h-full z-[100] animate-fade-in">
