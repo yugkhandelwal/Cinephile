@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion, useScroll, useTransform, useMotionTemplate, AnimatePresence } from "framer-motion";
 import { generateSeoUrl } from "@/shared/lib/utils";
 import { createPortal } from "react-dom";
 import { Button } from "@/shared/components/ui/button";
@@ -8,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Film, Search, X, User, LogOut, Settings, BookmarkPlus, ChevronDown, Home, Tv, Compass, Clapperboard, Sparkles } from "lucide-react";
+import { Film, Search, X, User, LogOut, Settings, BookmarkPlus, ChevronDown, Home, Tv, Compass, Clapperboard, Sparkles, Clock } from "lucide-react";
 
 import { useContentMode } from "@/context/ContentModeProvider";
 import { useAuth } from "@/context/AuthProvider";
@@ -19,16 +20,18 @@ import { searchQuerySchema } from "@/shared/lib/validation";
 import { TmdbSearchResult } from "@/shared/api/tmdb/types";
 import { validateSearchQuery } from "@/shared/lib/inputSanitization";
 
-type SearchFilter = 'multi' | 'movie' | 'tv';
+type SearchFilter = 'multi' | 'movie' | 'tv' | 'anime';
 const filterLabels: Record<SearchFilter, string> = {
-  multi: 'Movies & TV Shows',
+  multi: 'All',
   movie: 'Movies',
-  tv: 'TV Shows'
+  tv: 'TV Shows',
+  anime: 'Anime',
 };
 const nextFilter: Record<SearchFilter, SearchFilter> = {
   multi: 'movie',
   movie: 'tv',
-  tv: 'multi'
+  tv: 'anime',
+  anime: 'multi',
 };
 
 const Navbar = () => {
@@ -39,6 +42,7 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [searchExpanded, setSearchExpanded] = useState(false);
+  const [isNavHovered, setIsNavHovered] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [focusedMenuIndex, setFocusedMenuIndex] = useState(0);
   const [searchFilter, setSearchFilter] = useState<SearchFilter>('multi');
@@ -75,7 +79,16 @@ const Navbar = () => {
   const { mode: contentMode, setMode: setContentMode } = useContentMode();
   useNavbarEffects(query, setSuggestions, setOpen, boxRef, (fn) => setActiveIndex((i) => fn(i)), setSearchExpanded, setQuery, searchFilter, contentMode);
   
-  // Track scroll position for dynamic navbar
+  // Smooth Scroll-Linked Motion
+  const { scrollY } = useScroll();
+  const navContainerTop = useTransform(scrollY, [0, 60], ["24px", "16px"]);
+  const navMaxWidth = useTransform(scrollY, [0, 60], ["1280px", "1152px"]);
+  const navPaddingY = useTransform(scrollY, [0, 60], ["12px", "8px"]);
+  const glassOpacity = useTransform(scrollY, [0, 60], [0, 1]);
+  const logoScale = useTransform(scrollY, [0, 60], [1, 0.85]);
+  const logoTextScale = useTransform(scrollY, [0, 60], ["1.875rem", "1.5rem"]); // text-3xl to text-2xl
+  
+  // Track scroll position for some legacy mobile class toggles
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -208,305 +221,327 @@ const Navbar = () => {
     location.pathname.startsWith('/movie/') || 
     location.pathname.startsWith('/tv/') || 
     isAnimeDetailsPage;
+  const isLandingPage = location.pathname === '/';
 
   return (
     <>
-      <div className={`${isTitlePage ? 'hidden' : 'hidden md:flex'} fixed left-0 right-0 z-50 justify-center px-4 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isScrolled ? 'top-2 md:top-4' : 'top-0'}`}>
-        <nav className={`w-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative pointer-events-auto flex items-center justify-between ${
-          isScrolled 
-            ? 'max-w-6xl md:lg-surface md:rounded-full px-4 py-2 md:px-6 md:py-2 md:shadow-[0_20px_50px_rgba(0,0,0,0.5)] md:border md:border-white/10' 
-            : 'max-w-7xl bg-transparent px-4 py-3 md:px-6 md:py-4 border-transparent'
-        }`}>
-          {/* Apple-style Frosted Glass Background Layer - Only visible when scrolled on desktop */}
-          <div className={`hidden md:block absolute inset-0 rounded-full transition-opacity duration-500 -z-10 ${isScrolled ? 'opacity-100 lg-lens' : 'opacity-0'}`}>
-            <div className="lg-highlight rounded-full"></div>
-            <div className="lg-rim rounded-full"></div>
-          </div>
+      {/* DYNAMIC ISLAND (DESKTOP) */}
+      <motion.div 
+        style={{ top: navContainerTop }}
+        className={`${isTitlePage || isLandingPage ? 'hidden' : 'hidden md:flex'} fixed left-0 right-0 z-[100] pointer-events-none w-full max-w-[1400px] mx-auto px-4 lg:px-8 justify-between items-center`}
+      >
+        {/* Left Area: Logo */}
+        <motion.div 
+          layout
+          className="pointer-events-auto flex items-center h-12 relative"
+        >
+          {/* Logo */}
+          <Link to={mode === 'anime' ? '/anime' : '/home'} className="flex items-center gap-2 group shrink-0 pr-1">
+            <img src="/logo_cropped.png" alt="Cinephile" className="w-10 h-10 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg" />
+            <span 
+              className="hidden lg:block font-heading font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 text-2xl whitespace-nowrap"
+            >
+              Cinephile
+            </span>
+          </Link>
+        </motion.div>
 
-          <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-primary text-primary-foreground rounded px-3 py-1 z-50">Skip to content</a>
-          
-          {/* Logo - Left/Center */}
-          <div className="flex-1 flex items-center justify-center md:justify-start z-10 gap-4">
-            <Link to={mode === 'anime' ? '/anime' : '/home'} className="flex items-center gap-2 group relative translate-y-1">
-              <img src="/logo_cropped.png" alt="Cinephile" className="w-11 h-11 sm:w-12 sm:h-12 group-hover:scale-110 transition-transform duration-300 relative z-10 drop-shadow-lg" />
-              <span className={`hidden lg:block font-heading font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/70 transition-all duration-500 ${isScrolled ? 'text-2xl' : 'text-3xl'}`}>
-                Cinephile
-              </span>
-            </Link>
-
-
-          </div>
-
-          {/* Links - Center */}
-          <div className="hidden md:flex flex-1 justify-center items-center gap-8 z-10">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className="relative group py-2"
-              >
-                <span className={`text-sm font-medium transition-all duration-300 ${
-                  location.pathname === link.path
-                    ? "text-primary drop-shadow-[0_0_8px_rgba(145,70,255,0.5)]"
-                    : "text-white/70 group-hover:text-white"
-                }`}>
-                  {link.name}
-                </span>
-                
-                <span className={`absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full transition-all duration-300 ${
-                  location.pathname === link.path 
-                    ? "w-full" 
-                    : "w-0 group-hover:w-full"
-                }`} />
-                
-                <span className="absolute -inset-2 bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 -z-10" />
-              </Link>
-            ))}
-          </div>
-
-          {/* Actions - Right */}
-          <div className="hidden md:flex flex-1 justify-end items-center gap-2 md:gap-4 z-10">
-              {/* Animated Search Button/Bar */}
-              <div className="relative">
-                {/* Search Button (collapsed state) */}
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/10 rounded-full opacity-0 group-hover:opacity-100 blur transition-all duration-300" />
+        {/* Center Pill: Links */}
+        <motion.nav 
+          layout
+          onHoverStart={() => setIsNavHovered(true)}
+          onHoverEnd={() => !searchExpanded && !userMenuOpen && !contentMenuOpen && setIsNavHovered(false)}
+          className="pointer-events-auto flex items-center px-4 h-12 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md border border-white/20 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),inset_0_-1px_2px_rgba(0,0,0,0.6),0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/5 relative overflow-hidden"
+        >
+          <div className="flex items-center gap-1 shrink-0">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="relative group flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/5 transition-colors"
+                >
+                  <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-primary drop-shadow-[0_0_8px_rgba(145,70,255,0.5)]' : 'text-white/70 group-hover:text-white'}`} />
+                  <AnimatePresence>
+                    {isNavHovered && (
+                      <motion.span 
+                        initial={{ width: 0, opacity: 0, marginLeft: -8 }}
+                        animate={{ width: "auto", opacity: 1, marginLeft: 0 }}
+                        exit={{ width: 0, opacity: 0, marginLeft: -8 }}
+                        className={`text-sm font-medium overflow-hidden whitespace-nowrap ${
+                          isActive
+                            ? "text-primary drop-shadow-[0_0_8px_rgba(145,70,255,0.5)]"
+                            : "text-white/70 group-hover:text-white"
+                        }`}>
+                        {link.name}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                   
-                  {/* Search Icon Button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Open search"
-                    onClick={() => {
-                      setSearchExpanded(true);
-                      setTimeout(() => inputRef.current?.focus(), 100);
-                    }}
-                    className="relative rounded-full hover:bg-primary/10 hover:scale-110 transition-all duration-300"
-                  >
-                    <Search className="w-5 h-5" />
-                  </Button>
-                </div>
+                  {isActive && (
+                    <motion.div layoutId="navIndicator" className="absolute -bottom-1 left-3 right-3 h-[2px] bg-primary rounded-full" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </motion.nav>
 
-                {searchExpanded && createPortal(
-                  <div 
-                    id="search-modal"
-                    className="fixed inset-0 z-[100] flex justify-center items-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
-                    onClick={() => {
-                      setSearchExpanded(false);
+        {/* Right Actions Wrapper */}
+        <div className="flex items-center gap-3">
+          {/* Search Pill */}
+          <motion.nav 
+              layout
+              onHoverStart={() => setIsNavHovered(true)}
+              onHoverEnd={() => !searchExpanded && !userMenuOpen && !contentMenuOpen && setIsNavHovered(false)}
+              className="pointer-events-auto flex items-center justify-center w-12 h-12 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md border border-white/20 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),inset_0_-1px_2px_rgba(0,0,0,0.6),0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/5 relative overflow-hidden shrink-0"
+          >
+            <button
+              aria-label="Open search"
+              onClick={() => {
+                setSearchExpanded(true);
+                setTimeout(() => inputRef.current?.focus(), 100);
+              }}
+              className="w-full h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 transition-all duration-300"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+
+            {/* Global Search Modal */}
+            {searchExpanded && createPortal(
+              <div 
+                id="search-modal"
+                className="fixed inset-0 z-[100] flex justify-center items-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={() => {
+                  setSearchExpanded(false);
+                  setOpen(false);
+                  setQuery("");
+                }}
+              >
+                <form
+                  ref={boxRef}
+                  onClick={(e) => e.stopPropagation()}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (suggestions.length > 0) {
+                      const top = suggestions[0];
+                      saveRecentSearch(toTitle(top));
+                      if (top.media_type === 'anime') {
+                        navigate(`/anime/${top.id}`);
+                      } else {
+                        const mediaType = top.title ? 'movie' : 'tv';
+                        navigate(generateSeoUrl(mediaType, top.id, top.title || top.name));
+                      }
                       setOpen(false);
+                      setSearchExpanded(false);
                       setQuery("");
-                    }}
-                  >
-                    <form
-                      ref={boxRef}
-                      onClick={(e) => e.stopPropagation()}
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (suggestions.length > 0) {
-                          const top = suggestions[0];
-                          saveRecentSearch(toTitle(top));
-                          if (top.media_type === 'anime') {
-                            navigate(`/anime/${top.id}`);
-                          } else {
-                            const mediaType = top.title ? 'movie' : 'tv';
-                            navigate(generateSeoUrl(mediaType, top.id, top.title || top.name));
+                    }
+                  }}
+                  className="w-full max-w-xl mx-4 flex flex-col gap-3 animate-in zoom-in-95 duration-200"
+                >
+                  {/* Header: Title and Controls */}
+                  <div className="flex items-center justify-between px-1">
+                    <h2 className="text-xl font-bold text-white tracking-tight">Search</h2>
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1a1a] border border-white/10 rounded-lg text-xs font-medium text-white/80 cursor-pointer hover:bg-[#222] transition-colors select-none">
+                            {filterLabels[searchFilter]}
+                            <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="z-[200] bg-[#1a1a1a] border-white/10 text-white/80">
+                          <DropdownMenuItem onClick={() => setSearchFilter('multi')} className="focus:bg-white/10 focus:text-white cursor-pointer">
+                            🔍 All
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSearchFilter('movie')} className="focus:bg-white/10 focus:text-white cursor-pointer">
+                            🎬 Movies
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSearchFilter('tv')} className="focus:bg-white/10 focus:text-white cursor-pointer">
+                            📺 TV Shows
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSearchFilter('anime')} className="focus:bg-white/10 focus:text-white cursor-pointer">
+                            🎌 Anime
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchExpanded(false);
+                          setQuery("");
+                          setOpen(false);
+                        }}
+                        className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a] border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                      >
+                        <X className="w-4 h-4 text-white/80" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Input container */}
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/10 rounded-full opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 blur transition-all duration-500 pointer-events-none" />
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={query}
+                      autoFocus
+                      onChange={(e) => setQuery(e.target.value)}
+                      onFocus={() => {
+                        if (query.trim().length > 0 || recentSearches.length > 0) {
+                          setOpen(true);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (!open || !suggestions.length) {
+                          if (e.key === 'Escape') {
+                            setSearchExpanded(false);
+                            setQuery("");
+                            setOpen(false);
                           }
+                          return;
+                        }
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setActiveIndex((i) => Math.max(i - 1, 0));
+                        } else if (e.key === 'Enter') {
+                          if (activeIndex >= 0) {
+                            e.preventDefault();
+                            const it = suggestions[activeIndex];
+                            saveRecentSearch(toTitle(it));
+                            if (it.media_type === 'anime') {
+                              navigate(`/anime/${it.id}`);
+                            } else {
+                              const mediaType = it.title ? 'movie' : 'tv';
+                              navigate(generateSeoUrl(mediaType, it.id, it.title || it.name));
+                            }
+                            setOpen(false);
+                            setSearchExpanded(false);
+                            setQuery("");
+                          }
+                        } else if (e.key === 'Escape') {
                           setOpen(false);
                           setSearchExpanded(false);
                           setQuery("");
                         }
                       }}
-                      className="w-full max-w-xl mx-4 flex flex-col gap-3 animate-in zoom-in-95 duration-200"
-                    >
-                      {/* Header: Title and Controls */}
-                      <div className="flex items-center justify-between px-1">
-                        <h2 className="text-xl font-bold text-white tracking-tight">Search</h2>
-                        <div className="flex items-center gap-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1a1a] border border-white/10 rounded-lg text-xs font-medium text-white/80 cursor-pointer hover:bg-[#222] transition-colors select-none">
-                                {filterLabels[searchFilter]}
-                                <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                      placeholder="Type here to search..."
+                      className="relative z-10 w-full h-14 rounded-full border border-white/10 bg-[#0a0a0a] px-12 text-base font-medium
+                                focus:outline-none focus:border-white/30 focus:bg-[#111] text-white
+                                placeholder:text-white/40 transition-all duration-200 shadow-inner"
+                    />
+                    <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                  </div>
+
+                  {/* Suggestions / Recent Dropdown */}
+                  <div 
+                    className="w-full bg-[#0a0a0a]/95 backdrop-blur-3xl border border-white/10 rounded-[28px] overflow-hidden mt-2 flex flex-col min-h-[100px] shadow-2xl"
+                    aria-live="polite"
+                  >
+                    {open && suggestions.length > 0 ? (
+                      <div className="max-h-[50vh] overflow-y-auto p-2 flex flex-col gap-1">
+                        {suggestions.map((s, idx) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              saveRecentSearch(toTitle(s));
+                              if (s.media_type === 'anime') {
+                                navigate(`/anime/${s.id}`);
+                              } else {
+                                const mediaType = s.title ? 'movie' : 'tv';
+                                navigate(generateSeoUrl(mediaType, s.id, s.title || s.name));
+                              }
+                              setOpen(false);
+                              setSearchExpanded(false);
+                              setQuery("");
+                            }}
+                            className={`w-full text-left px-4 py-2.5 flex items-center gap-4 transition-all duration-200 group rounded-2xl
+                                        ${idx === activeIndex ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                          >
+                            <img
+                              src={s.poster_path ? `https://image.tmdb.org/t/p/w92${s.poster_path}` : 'https://placehold.co/92x138/1a1a1a/FFF?text=No+Image'}
+                              alt=""
+                              className="w-10 h-14 object-cover rounded shadow-md group-hover:shadow-lg transition-shadow"
+                            />
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="text-sm font-medium text-white truncate">{toTitle(s)}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                {s.media_type && (
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded">
+                                    {s.media_type}
+                                  </span>
+                                )}
+                                {(s.release_date || s.first_air_date) && (
+                                  <span className="text-xs text-white/50">
+                                    {(s.release_date || s.first_air_date)?.substring(0, 4)}
+                                  </span>
+                                )}
                               </div>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="z-[200] bg-[#1a1a1a] border-white/10 text-white/80">
-                              <DropdownMenuItem onClick={() => setSearchFilter('multi')} className="focus:bg-white/10 focus:text-white cursor-pointer">
-                                Movies & TV Shows
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setSearchFilter('movie')} className="focus:bg-white/10 focus:text-white cursor-pointer">
-                                Movies
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setSearchFilter('tv')} className="focus:bg-white/10 focus:text-white cursor-pointer">
-                                TV Shows
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : open && query.length > 0 ? (
+                      <div className="py-12 flex flex-col items-center justify-center text-white/40 gap-2">
+                        <Search className="w-8 h-8 opacity-20" />
+                        <p className="text-sm">No results found for "{query}"</p>
+                      </div>
+                    ) : recentSearches.length > 0 ? (
+                      <div className="p-2 flex flex-col gap-1">
+                        <div className="px-3 py-1.5 flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-bold text-white/30 uppercase tracking-wider">Recent Searches</span>
                           <button
                             type="button"
                             onClick={() => {
-                              setSearchExpanded(false);
-                              setQuery("");
-                              setOpen(false);
+                              setRecentSearches([]);
+                              localStorage.removeItem('recentSearches');
                             }}
-                            className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a] border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                            className="text-[11px] font-medium text-white/30 hover:text-white transition-colors"
                           >
-                            <X className="w-4 h-4 text-white/80" />
+                            Clear
                           </button>
                         </div>
+                        {recentSearches.map((term, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setQuery(term);
+                              setTimeout(() => inputRef.current?.focus(), 0);
+                            }}
+                            className="w-full text-left px-4 py-2.5 flex items-center gap-3 transition-all duration-200 text-white/80 rounded-2xl hover:bg-white/5"
+                          >
+                            <Clock className="w-4 h-4 text-white/40" />
+                            <span className="text-sm truncate">{term}</span>
+                          </button>
+                        ))}
                       </div>
-
-                      {/* Search Input */}
-                      <div className="relative group">
-                        <input
-                          ref={inputRef}
-                          value={query}
-                          onChange={(e) => {
-                            const rawValue = e.target.value;
-                            const validation = validateSearchQuery(rawValue, { preserveSpaces: true });
-                            if (validation.isValid || rawValue === '') {
-                              setQuery(validation.sanitized);
-                              setOpen(validation.sanitized.trim().length >= 2);
-                            } else if (validation.error) {
-                              setQuery(validation.sanitized);
-                              setOpen(false);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (!open || !suggestions.length) {
-                              if (e.key === 'Escape') {
-                                setSearchExpanded(false);
-                                setQuery("");
-                                setOpen(false);
-                              }
-                              return;
-                            }
-                            if (e.key === 'ArrowDown') {
-                              e.preventDefault();
-                              setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
-                            } else if (e.key === 'ArrowUp') {
-                              e.preventDefault();
-                              setActiveIndex((i) => Math.max(i - 1, 0));
-                            } else if (e.key === 'Enter') {
-                              if (activeIndex >= 0) {
-                                e.preventDefault();
-                                const it = suggestions[activeIndex];
-                                saveRecentSearch(toTitle(it));
-                                if (it.media_type === 'anime') {
-                                  navigate(`/anime/${it.id}`);
-                                } else {
-                                  const mediaType = it.title ? 'movie' : 'tv';
-                                  navigate(generateSeoUrl(mediaType, it.id, it.title || it.name));
-                                }
-                                setOpen(false);
-                                setSearchExpanded(false);
-                                setQuery("");
-                              }
-                            } else if (e.key === 'Escape') {
-                              setOpen(false);
-                              setSearchExpanded(false);
-                              setQuery("");
-                            }
-                          }}
-                          placeholder="Type here to search..."
-                          className="w-full h-12 rounded-xl border border-white/10 bg-[#0a0a0a] px-12 text-sm font-medium
-                                    focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-white/30 focus:bg-[#111] text-white
-                                    placeholder:text-white/40 transition-all duration-200 shadow-inner"
-                        />
-                        <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                    ) : (
+                      <div className="py-12 flex flex-col items-center justify-center text-white/30 gap-2">
+                        <Compass className="w-8 h-8 opacity-20" />
+                        <p className="text-sm">Search for movies, TV shows, and anime</p>
                       </div>
-
-                      {/* Suggestions / Recent Dropdown container */}
-                      <div 
-                        className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl overflow-hidden mt-1 flex flex-col min-h-[100px]"
-                        aria-live="polite"
-                      >
-                        {open && suggestions.length > 0 ? (
-                          <div className="max-h-[50vh] overflow-y-auto py-2">
-                            {suggestions.map((s, idx) => (
-                              <button
-                                key={s.id}
-                                type="button"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                  saveRecentSearch(toTitle(s));
-                                  if (s.media_type === 'anime') {
-                                    navigate(`/anime/${s.id}`);
-                                  } else {
-                                    const mediaType = s.title ? 'movie' : 'tv';
-                                    navigate(generateSeoUrl(mediaType, s.id, s.title || s.name));
-                                  }
-                                  setOpen(false);
-                                  setSearchExpanded(false);
-                                  setQuery("");
-                                }}
-                                className={`w-full text-left px-4 py-2.5 flex items-center gap-4 transition-colors group
-                                            ${idx === activeIndex ? 'bg-white/5' : 'hover:bg-white/5'}`}
-                              >
-                                <div className="relative flex-shrink-0 rounded-md overflow-hidden bg-white/5 w-10 h-14">
-                                  <img 
-                                    src={toPoster(s.poster_path)} 
-                                    loading="lazy" 
-                                    className="w-full h-full object-cover" 
-                                    alt={toTitle(s)}
-                                  />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-sm font-medium truncate text-white/90 group-hover:text-white">
-                                    {toTitle(s)}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-white/40 mt-1">
-                                    <span>{toYear(s)}</span>
-                                    <span className="w-1 h-1 rounded-full bg-white/20" />
-                                    <span>{s.media_type === 'anime' ? 'Anime' : (s.title ? 'Movie' : 'TV Show')}</span>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="p-4 flex flex-col h-full">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-[10px] font-bold tracking-wider text-white/40 uppercase">Recent</span>
-                              {recentSearches.length > 0 && (
-                                <button 
-                                  type="button" 
-                                  onClick={() => {
-                                    setRecentSearches([]);
-                                    localStorage.removeItem('recentSearches');
-                                  }}
-                                  className="text-[10px] text-white/40 hover:text-white/80 transition-colors uppercase"
-                                >
-                                  Clear
-                                </button>
-                              )}
-                            </div>
-                            <div className="flex flex-col">
-                              {recentSearches.length > 0 ? (
-                                recentSearches.map((recent, idx) => (
-                                  <div 
-                                    key={idx}
-                                    onClick={() => {
-                                      setQuery(recent);
-                                      setTimeout(() => inputRef.current?.focus(), 50);
-                                    }}
-                                    className="flex items-center gap-3 px-2 py-2 hover:bg-white/5 rounded-lg cursor-pointer text-white/60 text-sm group"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70 group-hover:opacity-100"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                    <span className="group-hover:text-white">{recent}</span>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="text-white/30 text-xs italic px-2 py-4">No recent searches</div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </form>
+                    )}
                   </div>
-                , document.body)}
+                </form>
               </div>
+            , document.body)}
+          </motion.nav>
 
+          {/* Auth Area */}
+          <motion.div 
+            layout
+            className="pointer-events-auto flex items-center h-12 relative"
+          >
+            <div className="flex items-center shrink-0">
               {/* Auth Section (Desktop only) */}
               {!loading && !user && (
                 <Button 
@@ -606,21 +641,22 @@ const Navbar = () => {
                           </div>
                         </button>
                       </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
-              
-              {/* Loading State */}
-              {loading && (
-                <div className="hidden md:block w-9 h-9 rounded-full bg-muted animate-pulse" />
-              )}
+                  
+                  {/* Loading State */}
+                  {loading && (
+                    <div className="hidden md:block w-9 h-9 rounded-full bg-muted animate-pulse" />
+                  )}
             </div>
-        </nav>
-      </div>
+          </motion.div>
+        </div>
+      </motion.div>
 
       {/* Fixed Bottom Tab Bar for Mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 animate-fade-in pb-safe">
+      <div className={`${isLandingPage ? 'hidden' : 'md:hidden'} fixed bottom-0 left-0 right-0 z-50 animate-fade-in pb-safe`}>
         <div className="bg-black/90 backdrop-blur-3xl border-t border-white/10 px-2 py-2 flex items-center justify-between overflow-hidden relative">
           {/* Animated glow matching active tab */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
@@ -730,7 +766,8 @@ function useNavbarEffects(
       try {
         let res: any;
         let filtered: any[] = [];
-        if (contentMode === 'anime') {
+        // Search anime if in anime mode OR if anime filter is explicitly selected
+        if (contentMode === 'anime' || searchFilter === 'anime') {
           res = await malClient.searchAnime(validationResult.data, 8, 0);
           if (res && res.data) {
             filtered = res.data.map((edge: any) => ({

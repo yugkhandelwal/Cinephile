@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, MonitorPlay, SkipBack, SkipForward, Settings2, Info, ListVideo, PlayCircle, Star, Tv } from "lucide-react";
+import { ArrowLeft, MonitorPlay, SkipBack, SkipForward, Settings2, Info, ListVideo, PlayCircle, Star, Tv, AlertCircle } from "lucide-react";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { useMalDetails } from "@/shared/api/mal/hooks";
 import { useContinueWatching } from "@/shared/hooks/useContinueWatching";
@@ -58,6 +58,7 @@ const AnimePlayer = () => {
   );
   const [audioType, setAudioType] = useState<"sub" | "dub">(initialAudio);
   const [currentTime, setCurrentTime] = useState(Number(initialTime));
+  const [iframeError, setIframeError] = useState(false);
   const { saveProgress } = useContinueWatching();
   const [autoPlay, setAutoPlay] = useState(false);
   const [autoNext, setAutoNext] = useState(true);
@@ -241,6 +242,28 @@ const AnimePlayer = () => {
           <div className="w-full aspect-video bg-black relative shadow-inner">
             {isLoading ? (
               <Skeleton className="w-full h-full bg-white/5" />
+            ) : iframeError ? (
+              /* Error fallback */
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 gap-6 p-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-xl mb-2">This server couldn't load</h3>
+                  <p className="text-white/50 text-sm max-w-xs">Try switching to a different server below.</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {SERVERS.filter(s => s.id !== activeServer).map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => { setIframeError(false); setActiveServer(s.id); }}
+                      className="px-4 py-2 rounded-full bg-white/10 hover:bg-primary/30 border border-white/10 hover:border-primary/50 text-white text-sm font-medium transition-all duration-200"
+                    >
+                      Try {s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : (
               <iframe
                 key={`${id}-${currentEp}-${activeServer}`}
@@ -248,7 +271,8 @@ const AnimePlayer = () => {
                 className="absolute inset-0 w-full h-full border-0"
                 allowFullScreen
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              ></iframe>
+                onError={() => setIframeError(true)}
+              />
             )}
             
             {/* Server Tag Overlay (Yenime style) */}

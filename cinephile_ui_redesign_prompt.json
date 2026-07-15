@@ -1,0 +1,149 @@
+{
+  "title": "Cinephile UI/UX Transformation — Agent Prompt",
+  "role_and_mission": "You are acting as a senior frontend/design engineer embedded in the Cinephile codebase (React 18 + TypeScript + Vite + Tailwind + shadcn/ui + Framer Motion, on a Supabase backend with TMDB/MAL data). Your job is to take Cinephile's UI from 'solid prototype' to a premium streaming product — Apple TV / Netflix / Crunchyroll / Plex tier — through a sequence of scoped, reviewable modules. This is not a blank-canvas redesign: real user flows, real data shapes, and real technical debt already exist. Every change has to respect that.",
+  "hard_constraints": [
+    {
+      "id": "architecture_locked",
+      "rule": "React Query, React Router, and Supabase auth/DB stay as-is. This is a presentation/interaction-layer redesign only."
+    },
+    {
+      "id": "dual_mode_data",
+      "rule": "Cinephile has a TMDB side (movies/TV) and a MAL/Jikan side (anime), sharing MediaCard and ContentRail. Anime data leans on Japanese titles and a different rating scale — validate every shared-component redesign against both shapes, not just TMDB's."
+    },
+    {
+      "id": "dark_only_theme",
+      "rule": "forcedTheme=\"dark\" in App.tsx is intentional — no light-mode variants. Palette anchor: near-black background, primary purple #9146FF, glassmorphism (backdrop-blur)."
+    },
+    {
+      "id": "token_driven_styling",
+      "rule": "Global look changes (radius, spacing, color) go through src/index.css CSS variables and tailwind.config.ts — never hardcoded per component (change --radius, don't hand-edit rounded-3xl across 20 files)."
+    },
+    {
+      "id": "props_contracts",
+      "rule": "MediaCard and other widely-shared components are used across grids, carousels, and search results. Extend props, don't rewrite them, unless explicitly migrating every call site."
+    },
+    {
+      "id": "shadcn_primitives",
+      "rule": "Button, Input, Select, Sheet, Dialog, DropdownMenu, Toast, Slider, Progress are Radix-backed — restyle via CSS variables, don't reimplement their logic."
+    }
+  ],
+  "current_state": {
+    "maturity": "Production-ready frontend, advanced-prototype backend integration.",
+    "complete": [
+      "Auth",
+      "TMDB discovery",
+      "MAL discovery",
+      "Universal player (TMDB + anime iframe embeds)",
+      "Continue watching",
+      "Watchlist",
+      "Debounced multi-category search"
+    ],
+    "partial": [
+      "PWA (manifest exists, service worker needs tuning)"
+    ],
+    "known_technical_debt": [
+      "Player.tsx and AnimePlayer.tsx share ~70% identical logic (progress saving, layout, server selection) and should eventually collapse into a shared BasePlayer.",
+      "Some 'any' types at the TMDB/MAL API boundary.",
+      "A few shared/components are single-feature and belong in their feature folder instead."
+    ]
+  },
+  "prioritized_backlog": [
+    {
+      "item": "Omnibar search (Cmd+K, via cmdk) merging TMDB + MAL results",
+      "priority": "High",
+      "effort": "High",
+      "notes": "Also on the product roadmap independently — do it once. Must make current scope (Movies/TV vs Anime) visible so a user searching anime while in 'Movie mode' doesn't silently get zero results."
+    },
+    {
+      "item": "Skeleton loaders in ContentRail (replace blank/spinner states)",
+      "priority": "High",
+      "effort": "Low",
+      "notes": "Exact-dimension skeleton cards so nothing shifts on load."
+    },
+    {
+      "item": "Shared element transitions (MediaCard poster → Details hero, Framer Motion layoutId)",
+      "priority": "Medium",
+      "effort": "High",
+      "notes": ""
+    },
+    {
+      "item": "Rail nav arrows (left/right chevrons on ContentRail, desktop hover)",
+      "priority": "Medium",
+      "effort": "Low",
+      "notes": "For trackpad-less desktop users."
+    }
+  ],
+  "additional_backlog_items": [
+    "InfiniteGrid/VirtualGrid: confirm virtualization actually engages above ~50-100 items (genre browsing) — correctness risk, not just polish.",
+    "ContinueWatchingCarousel: the 1s progress sync can force full-card re-renders; scope re-renders to the progress-bar div only (memo the card, isolate the ticking state) to hold 60fps.",
+    "MediaCard: bake the skeleton loading state directly into the component instead of wrapping it externally."
+  ],
+  "screen_by_screen_direction": [
+    {
+      "screen": "Homepage (/home)",
+      "current": "Hero carousel + Continue Watching row + multiple ContentRails.",
+      "fixes": [
+        "Add rail nav arrows.",
+        "Calibrate the hover-expand delay on MediaCard so it doesn't cause layout shift or mis-clicks."
+      ]
+    },
+    {
+      "screen": "Media Details (/movie/:id, /tv/:id)",
+      "current": "Backdrop + poster + metadata already reads 'cinematic.'",
+      "fixes": [
+        "Add trailer playback in a modal.",
+        "Add a direct season-jump control for TV shows instead of forcing a scroll to the bottom."
+      ]
+    },
+    {
+      "screen": "Anime Home (/anime)",
+      "current": "Currently mirrors the standard homepage structure too closely.",
+      "fixes": [
+        "Give it a distinguishing visual signal (accent color or theme variant) so users always know which mode they're in — addresses the 'searched anime in Movie mode, got nothing' confusion from the UX audit."
+      ]
+    },
+    {
+      "screen": "Player (/play/:type/:id)",
+      "current": "Full-bleed iframe, already correctly unmounts Navbar/Footer.",
+      "fixes": [
+        "Add a real error state for when a third-party server fails to load — no graceful fallback UI currently exists beyond the multi-server toggle."
+      ]
+    }
+  ],
+  "design_system_phase_0": [
+    "Extend src/index.css semantic tokens: surface, elevated surface, border, hover/active/disabled, overlay, skeleton, progress, focus — on top of the existing primary purple.",
+    "Typography: keep Inter for body; add one cinematic display face for h1/h2 only. Pick one — the audits suggest two different options (Outfit/Clash Display vs. Oswald/Playfair Display); don't ship both, decide before Phase 2.",
+    "Codify existing ad hoc values (radius, spacing, glass blur levels like 'bg-background/80 backdrop-blur-3xl border-b border-white/10') into reusable tokens/utilities instead of repeating literal classnames.",
+    "One icon set (Lucide, already in use) — audit for stray inconsistent icons while doing this pass."
+  ],
+  "performance_guardrails": [
+    "Any list-item component: React.memo.",
+    "Any list over ~50 items: virtualize (@tanstack/react-virtual or equivalent).",
+    "Images: loading=\"lazy\" on offscreen MediaCards, plus a blurhash/LQIP wrapper — currently plain <img> tags with no placeholder.",
+    "Cold boot already fires 6-10 simultaneous TMDB requests (Trending/Popular/Top Rated/Genres); new sections should ride the same batched/cached pattern, not add uncoordinated fetches.",
+    "Heavy libs (framer-motion, recharts, react-player) are candidates for manualChunks in vite.config.ts if bundle size becomes an issue."
+  ],
+  "execution_strategy": {
+    "method": "Module by module: implement, review, refine, then move on. Never break existing functionality — this is a presentation-layer transformation on a working product, not a rewrite.",
+    "order": [
+      "Design tokens (index.css, tailwind.config.ts) — no screens yet.",
+      "MediaCard (skeleton state baked in, hover calibration) — highest reuse, get it right once.",
+      "ContentRail (skeleton loaders + nav arrows) — both already High/Medium priority, Low effort.",
+      "ContinueWatchingCarousel re-render fix.",
+      "InfiniteGrid/VirtualGrid virtualization correctness check.",
+      "Omnibar search (Cmd+K, TMDB+MAL merged) — high effort, do after the primitives it depends on (skeletons, cards) are solid.",
+      "Shared element transitions (MediaCard → Details hero).",
+      "Anime Home visual differentiation.",
+      "Player error states.",
+      "BasePlayer refactor to remove Player.tsx/AnimePlayer.tsx duplication — a natural time to do it since UI work touches both anyway."
+    ]
+  },
+  "definition_of_done": [
+    "Matches the Phase 0 token system — no new hardcoded colors/radii/spacing.",
+    "Works correctly for both TMDB and MAL data shapes where the component is shared.",
+    "No regression in existing React Query caching/behavior.",
+    "List views stay virtualized/memoized per the performance guardrails.",
+    "Accessible: keyboard navigable, proper ARIA labels, visible focus states, respects prefers-reduced-motion.",
+    "Reviewed and confirmed working before the next module starts."
+  ]
+}

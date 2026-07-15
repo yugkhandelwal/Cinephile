@@ -43,6 +43,7 @@ import { ScrollToTop } from "./shared/components/ScrollToTop";
 import Navbar from "@/shared/components/layout/Navbar";
 import { PageTransition } from "./shared/components/PageTransition";
 import { PullToRefresh } from "./shared/components/PullToRefresh";
+import { SmoothScrollProvider } from "./shared/components/SmoothScrollProvider";
 
 // Configure React Query with better defaults
 const queryClient = new QueryClient({
@@ -122,6 +123,19 @@ const App = () => {
         // Example: analytics.track('performance', metric);
         console.log('Performance metric:', metric);
       });
+
+      // Eagerly preload heavy route chunks when browser is idle to ensure instant navigation
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+          import('./features/movies/Title');
+          import('./features/player/Player');
+        });
+      } else {
+        setTimeout(() => {
+          import('./features/movies/Title');
+          import('./features/player/Player');
+        }, 3000);
+      }
     }
   }, []);
 
@@ -147,9 +161,11 @@ const App = () => {
                   <VercelAnalytics />
                   <OfflineIndicator />
                   <Navbar />
-                  <PullToRefresh>
-                    <AnimatedRoutes />
-                  </PullToRefresh>
+                  <SmoothScrollProvider>
+                    <PullToRefresh>
+                      <AnimatedRoutes />
+                    </PullToRefresh>
+                  </SmoothScrollProvider>
                 </Suspense>
               </ErrorBoundary>
             </BrowserRouter>

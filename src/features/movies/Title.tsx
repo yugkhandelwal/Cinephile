@@ -1,4 +1,5 @@
 import Navbar from "@/shared/components/layout/Navbar";
+import { motion } from "framer-motion";
 import Footer from "@/shared/components/layout/Footer";
 import MediaCard from "@/shared/components/MediaCard";
 import { useParams, useNavigate } from "react-router-dom";
@@ -269,10 +270,33 @@ const TitlePage = ({ typeOverride }: { typeOverride?: "movie" | "tv" }) => {
     <div id="main" className="min-h-screen bg-background animate-fade-in pb-tabbar">
       <div className="w-full">
         {isLoading && (
-          <div className="pt-24 container mx-auto px-4 py-12">
-            <div className="animate-pulse space-y-6">
-              <Skeleton className="h-96 w-full rounded-2xl" />
-              <Skeleton className="h-40 w-full rounded-2xl" />
+          <div className="w-full">
+            {/* Hero skeleton */}
+            <div className="relative w-full h-[70vh] md:h-[85vh] bg-skeleton overflow-hidden">
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+              {/* Skeleton content placeholder */}
+              <div className="absolute bottom-12 left-6 md:left-16 lg:left-24 flex flex-col gap-4 max-w-lg">
+                <div className="h-12 w-72 rounded-xl bg-white/5 animate-pulse" />
+                <div className="flex gap-2">
+                  <div className="h-6 w-16 rounded-full bg-white/5 animate-pulse" />
+                  <div className="h-6 w-12 rounded-full bg-white/5 animate-pulse" />
+                  <div className="h-6 w-20 rounded-full bg-white/5 animate-pulse" />
+                </div>
+                <div className="h-16 w-full max-w-md rounded-xl bg-white/5 animate-pulse" />
+                <div className="flex gap-3">
+                  <div className="h-12 w-36 rounded-full bg-white/8 animate-pulse" />
+                  <div className="h-12 w-28 rounded-full bg-white/5 animate-pulse" />
+                </div>
+              </div>
+            </div>
+            {/* Tab skeleton */}
+            <div className="px-6 md:px-16 lg:px-24 mt-8 flex gap-6">
+              {[90, 72, 80, 60, 72].map((w, i) => (
+                <div key={i} className="h-5 rounded-full bg-white/5 animate-pulse" style={{ width: `${w}px` }} />
+              ))}
             </div>
           </div>
         )}
@@ -527,41 +551,37 @@ const TitlePage = ({ typeOverride }: { typeOverride?: "movie" | "tv" }) => {
               );
             })()}
 
-            {/* Tab Navigation */}
-            <div className="max-w-5xl mb-8 border-b border-white/10 w-full">
-              <div className="flex gap-6 overflow-x-auto hide-scrollbar px-4 sm:px-6 md:px-16 lg:px-24">
-                {kind === "tv" && (
-                  <button 
-                    onClick={() => setActiveTab("episodes")} 
-                    className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "episodes" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-                  >
-                    Episodes
-                  </button>
-                )}
-                <button 
-                  onClick={() => setActiveTab("overview")} 
-                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "overview" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-                >
-                  Overview
-                </button>
-                <button 
-                  onClick={() => setActiveTab("cast")} 
-                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "cast" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-                >
-                  Cast & Crew
-                </button>
-                <button 
-                  onClick={() => setActiveTab("media")} 
-                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "media" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-                >
-                  Media
-                </button>
-                <button 
-                  onClick={() => setActiveTab("similar")} 
-                  className={`font-bold pb-4 border-b-2 transition-colors whitespace-nowrap px-1 ${activeTab === "similar" ? "border-primary text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-                >
-                  Similar
-                </button>
+            {/* Tab Navigation — sliding animated underline */}
+            <div className="max-w-5xl mb-8 border-b border-white/8 w-full">
+              <div className="relative flex gap-1 overflow-x-auto hide-scrollbar px-4 sm:px-6 md:px-16 lg:px-24">
+                {[
+                  kind === "tv" ? { key: "episodes", label: "Episodes" } : null,
+                  { key: "overview", label: "Overview" },
+                  { key: "cast", label: "Cast & Crew" },
+                  { key: "media", label: "Media" },
+                  { key: "similar", label: "Similar" },
+                ]
+                  .filter(Boolean)
+                  .map((tab) => (
+                    <button
+                      key={tab!.key}
+                      onClick={() => setActiveTab(tab!.key as any)}
+                      className={`relative pb-4 px-1 font-semibold text-sm whitespace-nowrap transition-colors duration-200 ${
+                        activeTab === tab!.key
+                          ? "text-white"
+                          : "text-white/40 hover:text-white/70"
+                      }`}
+                    >
+                      {tab!.label}
+                      {activeTab === tab!.key && (
+                        <motion.div
+                          layoutId="tab-underline"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
+                          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                        />
+                      )}
+                    </button>
+                  ))}
               </div>
             </div>
 
@@ -611,27 +631,68 @@ const TitlePage = ({ typeOverride }: { typeOverride?: "movie" | "tv" }) => {
                 </div>
               )}
 
-              {/* Cast Tab */}
+              {/* Cast Tab — horizontal scroll rail */}
               {activeTab === "cast" && d.credits?.cast?.length > 0 && (
                 <div className="w-full animate-in fade-in slide-in-from-bottom-4">
-                  <div className="flex flex-wrap gap-6 px-4 sm:px-6 md:px-16 lg:px-24 max-w-7xl justify-center">
-                    {d.credits.cast.slice(0, 18).map((c) => (
-                      <div key={c.id} className="w-[120px] sm:w-[140px] group text-center cursor-pointer">
-                        <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden border border-white/10 group-hover:border-white/40 transition-all shadow-lg mb-3 bg-white/5">
-                          <img 
-                            src={c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : '/placeholder.svg'} 
-                            loading="lazy" 
+                  <div className="pl-4 sm:pl-6 md:pl-16 lg:pl-24 pr-6">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-6 font-heading text-white">Cast</h2>
+                  </div>
+                  {/* Horizontal scrollable rail */}
+                  <div className="flex gap-5 overflow-x-auto hide-scrollbar pl-4 sm:pl-6 md:pl-16 lg:pl-24 pr-6 pb-4">
+                    {d.credits.cast.slice(0, 24).map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex-none w-[100px] sm:w-[120px] group text-center cursor-pointer"
+                      >
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full overflow-hidden border-2 border-white/8 hoverable:group-hover:border-primary/50 transition-all duration-300 shadow-md bg-surface mb-3">
+                          <img
+                            src={
+                              c.profile_path
+                                ? `https://image.tmdb.org/t/p/w185${c.profile_path}`
+                                : "https://placehold.co/185x185/1a1a2e/ffffff?text=?"
+                            }
+                            loading="lazy"
                             alt={c.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                            className="w-full h-full object-cover hoverable:group-hover:scale-110 transition-transform duration-500"
                           />
                         </div>
-                        <p className="text-sm font-semibold text-gray-200 line-clamp-1">{c.name}</p>
+                        <p className="text-xs sm:text-sm font-semibold text-white/80 hoverable:group-hover:text-white transition-colors line-clamp-1">
+                          {c.name}
+                        </p>
                         {c.character && (
-                          <p className="text-xs text-gray-400 line-clamp-2 mt-1">{c.character}</p>
+                          <p className="text-[0.65rem] sm:text-xs text-white/40 line-clamp-1 mt-0.5">
+                            {c.character}
+                          </p>
                         )}
                       </div>
                     ))}
                   </div>
+
+                  {/* Director / key crew */}
+                  {d.credits?.crew?.some((c: any) => ["Director", "Creator", "Executive Producer"].includes(c.job)) && (
+                    <div className="px-4 sm:px-6 md:px-16 lg:px-24 mt-6">
+                      <h3 className="text-base font-bold text-white/60 mb-3 uppercase tracking-widest text-xs">Key Crew</h3>
+                      <div className="flex flex-wrap gap-3">
+                        {d.credits.crew
+                          .filter((c: any) => ["Director", "Creator", "Executive Producer", "Writer", "Screenplay"].includes(c.job))
+                          .slice(0, 8)
+                          .map((c: any) => (
+                            <div key={`${c.id}-${c.job}`} className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 border border-white/8 hoverable:hover:bg-white/10 transition-colors">
+                              <img
+                                src={c.profile_path ? `https://image.tmdb.org/t/p/w45${c.profile_path}` : "https://placehold.co/45x45/1a1a2e/ffffff?text=?"}
+                                alt={c.name}
+                                loading="lazy"
+                                className="w-8 h-8 rounded-full object-cover border border-white/10"
+                              />
+                              <div>
+                                <p className="text-sm font-semibold text-white/90">{c.name}</p>
+                                <p className="text-[0.7rem] text-white/40">{c.job}</p>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

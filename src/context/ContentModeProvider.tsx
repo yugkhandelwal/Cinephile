@@ -25,6 +25,14 @@ export const ContentModeProvider: React.FC<{ children: React.ReactNode }> = ({ c
     localStorage.setItem("cinephile_content_mode", newMode);
   };
 
+  // Stamp data-mode on <body> so CSS can override --primary for anime mode
+  useEffect(() => {
+    document.body.setAttribute("data-mode", mode);
+    return () => {
+      document.body.removeAttribute("data-mode");
+    };
+  }, [mode]);
+
   return (
     <ContentModeContext.Provider value={{ mode, setMode }}>
       {children}

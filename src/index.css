@@ -122,6 +122,50 @@ All colors MUST be HSL.
     --shadow-glow: 0 0 40px hsl(258 85% 62% / 0.15);
     --shadow-card: 0 12px 40px rgba(0,0,0,0.5);
 
+    /* Extended semantic surface tokens */
+    --surface: 230 12% 9%;         /* slightly elevated above card */
+    --surface-hover: 230 10% 13%; /* interactive hover state */
+    --overlay: 0 0% 0% / 0.75;    /* modal/sheet backdrops */
+    --skeleton: 230 10% 10%;      /* shimmer base */
+
+    /* Anime mode primary accent — hot pink */
+    --anime-primary: 330 90% 60%;
+    --anime-primary-foreground: 0 0% 100%;
+
+    /* Status colors */
+    --success: 142 70% 45%;
+    --warning: 38 95% 55%;
+    --info: 210 90% 60%;
+
+    /* Progress */
+    --progress: 258 85% 62%;     /* maps to primary */
+    --progress-track: 230 10% 14%;
+
+    /* Hero overlay */
+    --hero-overlay-bottom: 230 15% 4%;  /* matches --background */
+
+    /* Glass blur levels */
+    --blur-sm: blur(8px);
+    --blur-md: blur(20px);
+    --blur-lg: blur(40px);
+
+    /* Elevation shadows */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+    --shadow-xl: 0 24px 64px rgba(0,0,0,0.6);
+    --shadow-glow-primary: 0 0 30px hsl(258 85% 62% / 0.35);
+    --shadow-glow-anime: 0 0 30px hsl(330 90% 60% / 0.35);
+
+    /* Motion tokens */
+    --duration-fast: 150ms;
+    --duration-normal: 300ms;
+    --duration-slow: 500ms;
+    --duration-slower: 700ms;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
     --sidebar-background: 230 12% 7%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 258 85% 62%;
@@ -157,11 +201,56 @@ All colors MUST be HSL.
 
 @layer utilities {
   .hide-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Codified glassmorphism utility */
+  .glass {
+    background: hsl(var(--background) / 0.80);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-card {
+    background: hsl(var(--card) / 0.90);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Elevation utilities */
+  .elevation-sm  { box-shadow: var(--shadow-sm); }
+  .elevation-md  { box-shadow: var(--shadow-md); }
+  .elevation-lg  { box-shadow: var(--shadow-lg); }
+  .elevation-xl  { box-shadow: var(--shadow-xl); }
+  .glow-primary  { box-shadow: var(--shadow-glow-primary); }
+  .glow-anime    { box-shadow: var(--shadow-glow-anime); }
+
+  /* Typography scale utilities */
+  .text-display   { font-size: clamp(2.5rem, 8vw, 5rem); line-height: 1.05; letter-spacing: -0.03em; }
+  .text-hero      { font-size: clamp(2rem, 6vw, 4rem);   line-height: 1.1;  letter-spacing: -0.02em; }
+  .text-section   { font-size: clamp(1.5rem, 4vw, 2.5rem); line-height: 1.2; letter-spacing: -0.015em; }
+  .text-card-title { font-size: 0.9375rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; }
+  .text-metadata  { font-size: 0.8125rem; line-height: 1.4; color: hsl(var(--muted-foreground)); }
+  .text-overline  { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+
+  /* Focus ring token-based */
+  .focus-ring { outline: none; box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.6); }
+
+  /* Anime mode token override — set data-mode="anime" on body */
+  [data-mode="anime"] {
+    --primary: var(--anime-primary);
+    --primary-foreground: var(--anime-primary-foreground);
+    --ring: var(--anime-primary);
+    --accent: var(--anime-primary);
+    --accent-foreground: var(--anime-primary-foreground);
+    --progress: var(--anime-primary);
+    --shadow-glow-primary: var(--shadow-glow-anime);
   }
 }
 
@@ -368,6 +457,7 @@ a:not([class]) {
   isolation: isolate;
   overflow: hidden;
   will-change: transform, backdrop-filter;
+  transform: translateZ(0);
   /* Strong blur and saturation for Apple's signature glass look */
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);

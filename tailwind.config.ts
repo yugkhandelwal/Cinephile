@@ -52,6 +52,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          hover: "hsl(var(--surface-hover))",
+        },
+        skeleton: "hsl(var(--skeleton))",
+        overlay: "hsl(var(--overlay))",
+        anime: {
+          DEFAULT: "hsl(var(--anime-primary))",
+          foreground: "hsl(var(--anime-primary-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -126,8 +136,19 @@ export default {
         "scale-in": "scale-in 0.3s ease-out",
         "glow": "glow 2s ease-in-out infinite",
         "shimmer": "shimmer 1.5s infinite",
+        "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "slide-down": "slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "count-up": "count-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // @ts-ignore
+    function({ addVariant }: any) {
+      // Hover only on pointer devices — touch devices never trigger
+      addVariant("hoverable", "@media (hover: hover) and (pointer: fine)");
+    }
+  ],
 } satisfies Config;
+

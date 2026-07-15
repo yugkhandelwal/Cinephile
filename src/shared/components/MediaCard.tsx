@@ -8,7 +8,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { getPosterImageProps, ASPECT_RATIOS, getAspectRatioPadding } from "@/shared/lib/imageOptimizer";
 import { usePrefetchDetails } from "@/shared/api/tmdb/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 interface MediaCardProps {
   id?: number;
@@ -19,9 +19,10 @@ interface MediaCardProps {
   imageUrl: string;
   tag?: string;
   onRemove?: () => void;
+  enableParallax?: boolean;
 }
 
-const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag, onRemove }: MediaCardProps) => {
+const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag, onRemove, enableParallax = false }: MediaCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const prefetchDetails = usePrefetchDetails();
@@ -41,25 +42,55 @@ const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
   
   const [imageLoaded, setImageLoaded] = useState(false);
 
+  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (likeTimerRef.current) clearTimeout(likeTimerRef.current);
+      if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
     };
   }, []);
   
   // Prefetch details on hover for faster navigation
   const handlePrefetch = () => {
-    if (id) {
-      if (mediaType === "anime") {
-        queryClient.prefetchQuery({
-          queryKey: ["mal", "details", id.toString()],
-          queryFn: () => import("@/shared/api/mal/client").then(m => m.malClient.getAnimeDetails(id))
-        });
-      } else {
-        prefetchDetails(mediaType, id);
+    if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+    prefetchTimerRef.current = setTimeout(() => {
+      if (id) {
+        if (mediaType === "anime") {
+          queryClient.prefetchQuery({
+            queryKey: ["mal", "details", id.toString()],
+            queryFn: () => import("@/shared/api/mal/client").then(m => m.malClient.getAnimeDetails(id))
+          });
+        } else {
+          prefetchDetails(mediaType, id);
+        }
       }
-    }
+    }, 150);
+  };
+  
+  const handleMouseLeave = () => {
+    if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+    if (!enableParallax) return;
+    x.set(0);
+    y.set(0);
+  };
+
+  // Parallax Tilt Physics
+  const cardRef = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const mouseXSpring = useSpring(x, { stiffness: 400, damping: 30 });
+  const mouseYSpring = useSpring(y, { stiffness: 400, damping: 30 });
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["12deg", "-12deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-12deg", "12deg"]);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!enableParallax || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    x.set(mouseX / rect.width - 0.5);
+    y.set(mouseY / rect.height - 0.5);
   };
 
   const onAddWatchlist = async (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -148,39 +179,61 @@ const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
   );
 
   return (
-    <div 
+    <motion.div 
+      ref={cardRef}
       onClick={handleClick}
       onMouseEnter={handlePrefetch}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       onFocus={handlePrefetch}
       tabIndex={0}
       role="article"
       aria-label={`${title} (${year}), rated ${rating}`}
       className="group relative w-full flex flex-col cursor-pointer"
+      style={enableParallax ? { rotateX, rotateY, transformStyle: "preserve-3d" } : {}}
+      whileHover={enableParallax ? { z: 20 } : {}}
     >
       {/* Poster Image */}
       <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 shadow-md md:group-hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.7)] transition-all duration-500 ease-out">
+        
         {/* Inner Glassy Border */}
         <div className="absolute inset-0 rounded-2xl border border-white/5 md:group-hover:border-white/20 z-20 pointer-events-none transition-colors duration-500" />
         
-        {/* Skeleton while image loads */}
+        {/* Proper gradient shimmer sweep — translates from -100% to +100% */}
         {!imageLoaded && (
-          <div className="absolute inset-0 bg-white/5 animate-shimmer" />
+          <div className="absolute inset-0 bg-skeleton overflow-hidden">
+            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+          </div>
         )}
 
-        <img 
+        {/* Low-res placeholder for progressive blur-up */}
+        {imageUrl.includes('image.tmdb.org') && (
+          <img
+            src={imageUrl.replace(/\/w\d+\//, '/w92/')}
+            alt=""
+            decoding="async"
+            className={`absolute inset-0 w-full h-full object-cover blur-xl scale-110 transition-opacity duration-700 ease-out z-0 ${
+              imageLoaded ? 'opacity-0' : 'opacity-100'
+            }`}
+          />
+        )}
+
+        <img
           {...imageProps}
-          src={imageUrl}
+          src={imageUrl.includes('image.tmdb.org') ? imageUrl.replace(/\/w\d+\//, '/w342/') : imageUrl}
           alt={`${title} poster`}
           onLoad={() => setImageLoaded(true)}
+          loading="lazy"
+          decoding="async"
           className={`w-full h-full object-cover transition-all duration-700 ease-out ${
-            imageLoaded 
-              ? "scale-100 blur-0 md:group-hover:scale-105 opacity-100" 
+            imageLoaded
+              ? "scale-100 blur-0 hoverable:group-hover:scale-105 opacity-100"
               : "scale-110 blur-xl opacity-0"
           }`}
         />
         
-        {/* Subtle bottom gradient to ensure overlay icons are visible */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 z-10" />
+        {/* Subtle bottom gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent opacity-0 hoverable:group-hover:opacity-100 transition-opacity duration-500 z-10" />
 
         {/* Remove Button (Always Visible if provided, Outside of Hover Overlay) */}
         {onRemove && (
@@ -197,20 +250,20 @@ const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
           </motion.button>
         )}
 
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center pointer-events-none lg:pointer-events-auto z-10">
+        {/* Hover Overlay — scoped to hoverable: (fine pointer only, never touch) */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 hoverable:group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center pointer-events-none hoverable:pointer-events-auto z-10">
           {/* Play Icon */}
-          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white transform scale-90 md:group-hover:scale-100 transition-all duration-500 shadow-2xl border border-white/30">
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white transform scale-90 hoverable:group-hover:scale-100 transition-all duration-500 shadow-2xl border border-white/30">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </div>
           
           {/* Action Buttons (Top Right, Desktop Only) */}
-          <div className="absolute top-3 right-3 hidden md:flex flex-col gap-2 transform lg:translate-x-4 opacity-100 lg:opacity-0 lg:group-hover:translate-x-0 lg:group-hover:opacity-100 transition-all duration-500 delay-100 pointer-events-auto z-30">
-            <motion.button 
+          <div className="absolute top-3 right-3 hidden md:flex flex-col gap-2 transform translate-x-4 opacity-0 hoverable:group-hover:translate-x-0 hoverable:group-hover:opacity-100 transition-all duration-500 delay-100 pointer-events-auto z-30">
+            <motion.button
               whileTap={{ scale: 0.8 }}
-              onClick={onLike} 
+              onClick={onLike}
               onKeyDown={(e) => handleKeyDown(e, onLike)}
-              disabled={liking || liked} 
+              disabled={liking || liked}
               className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white hover:text-black transition-all duration-300 disabled:opacity-50 border border-white/20 shadow-lg"
               title={liking ? "Liking..." : liked ? "Liked!" : "Like"}
             >
@@ -230,11 +283,11 @@ const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
                 )}
               </AnimatePresence>
             </motion.button>
-            <motion.button 
+            <motion.button
               whileTap={{ scale: 0.8 }}
-              onClick={onAddWatchlist} 
+              onClick={onAddWatchlist}
               onKeyDown={(e) => handleKeyDown(e, onAddWatchlist)}
-              disabled={saving} 
+              disabled={saving}
               className={`w-9 h-9 rounded-full backdrop-blur-xl flex items-center justify-center transition-all duration-300 disabled:opacity-50 border border-white/20 shadow-lg ${
                 isSaved ? "bg-primary text-white hover:bg-primary/80" : "bg-black/40 text-white hover:bg-primary"
               }`}
@@ -272,22 +325,24 @@ const MediaCard = ({ id, mediaType = "movie", title, year, rating, imageUrl, tag
       </div>
       
       {/* Metadata */}
-      <div className="pt-4 flex flex-col gap-1 px-1">
-        <h3 className="font-semibold text-white text-sm md:text-base line-clamp-1 group-hover:text-primary transition-colors tracking-tight">
+      <div className="pt-3.5 flex flex-col gap-1 px-0.5">
+        <h3 className="font-semibold text-white/90 text-[0.875rem] line-clamp-1 hoverable:group-hover:text-primary transition-colors duration-200 tracking-tight leading-snug">
           {title}
         </h3>
-        <div className="flex items-center gap-2 text-xs md:text-sm text-gray-400 font-medium whitespace-nowrap overflow-hidden">
-          <div className="flex items-center gap-1">
-            <Star className="w-3.5 h-3.5 fill-current text-primary" />
-            <span className="text-gray-300 font-semibold">{rating?.toFixed(1) || rating || 'N/A'}</span>
-          </div>
-          <span className="text-gray-600 font-bold">·</span>
+        <div className="flex items-center gap-1.5 text-[0.75rem] text-white/40 font-medium">
+          {rating > 0 && (
+            <>
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+              <span className="text-white/60 font-semibold">{rating.toFixed(1)}</span>
+              <span className="text-white/20">·</span>
+            </>
+          )}
           <span>{year || 'N/A'}</span>
-          <span className="text-gray-600 font-bold">·</span>
-          <span className="capitalize">{mediaType === 'tv' ? 'TV Series' : mediaType === 'anime' ? 'Anime' : 'Movie'}</span>
+          <span className="text-white/20">·</span>
+          <span>{mediaType === 'tv' ? 'Series' : mediaType === 'anime' ? 'Anime' : 'Film'}</span>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

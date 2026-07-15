@@ -71,7 +71,7 @@ const AnimeHeroSlide = ({ featured }: { featured: any }) => {
           <div className="flex flex-row gap-3 w-full sm:w-auto mt-2">
             <Button 
               size="lg" 
-              onClick={() => navigate(generateSeoUrl('anime', featured.id, featured.title))}
+              onClick={() => navigate(`/anime/watch/${featured.id}`)}
               className="flex-1 sm:flex-none bg-rose-500 text-white hover:bg-rose-600 rounded-full px-4 sm:px-8 h-12 gap-2 shadow-[0_0_20px_rgba(244,63,94,0.3)] hover:scale-105 active:scale-95 transition-all text-sm font-bold"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
